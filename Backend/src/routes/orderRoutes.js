@@ -1,0 +1,26 @@
+const express = require('express');
+const router = express.Router();
+const orderController = require('../controllers/orderController');
+const upload = require('../config/multer');
+const attachmentController = require('../controllers/attachmentController');
+
+router.get('/', orderController.getAllOrders);
+router.post('/draft', orderController.createDraftOrder);
+router.post('/submit', orderController.submitOrder);
+router.patch('/:id/submit', orderController.submitDraftOrder);
+router.patch('/:id/confirm', orderController.confirmOrder);
+router.patch('/:id/reject', orderController.rejectOrder);
+router.patch('/:id', orderController.updateDraftOrder);
+router.post(
+    '/:id/attachments',
+    (req, res, next) => {
+      console.log('UPLOAD route hit');
+      console.log('before multer content-type = ', req.headers['content-type']);
+      next();
+    },
+    upload.single('file'),
+    attachmentController.addOrderAttachment
+  );
+router.get('/:id', orderController.getOrderById);
+
+module.exports = router;

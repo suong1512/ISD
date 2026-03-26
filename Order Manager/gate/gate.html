@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Department - Order Management</title>
+    <link rel="stylesheet" href="gate.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="gateway-container">
+        <div class="gateway-box">
+            <div class="gateway-header">
+                <img src="img/logo.jpeg" alt="Logo" style="width: 100px !important; height: 100px !important; object-fit: contain; margin-bottom: 15px; display: block; margin-left: auto; margin-right: auto;">
+                <div class="web-name">ORDER MANAGEMENT SYSTEM</div>
+                <h1>Select Department</h1>
+                <p>Please choose your role to sign in</p>
+            </div>
+            
+            <div class="role-selection">
+                <a href="../login/login.html" style="text-decoration: none; color: inherit;">
+                    <button class="role-btn" onclick="selectRole('sale')">
+                        <i class="fas fa-handshake"></i> 
+                        <span>Sales </span>
+                    </button>
+                </a>
+
+                <a href="../A_login/A_login.html" style="text-decoration: none; color: inherit;">
+                    <button class="role-btn" onclick="selectRole('admin')">
+                        <i class="fas fa-user-cog"></i> 
+                        <span>Administrator</span>
+                    </button>
+                </a>
+
+                <a href="../T_login/T_login.html" style="text-decoration: none; color: inherit;">
+                    <button class="role-btn" onclick="selectRole('tech')">
+                        <i class="fas fa-tools"></i> 
+                        <span>Technical</span>
+                </button>
+                </a>
+
+                <a href="../AC_login/AC_login.html" style="text-decoration: none; color: inherit;">
+                    <button class="role-btn" onclick="selectRole('warehouse')">
+                        <i class="fas fa-warehouse"></i> 
+                        <span>Accountant</span>
+                    </button>
+                </a>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
