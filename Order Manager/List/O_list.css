@@ -1,0 +1,345 @@
+:root {
+    --primary-color: #2d7a5d;
+    --bg-color: #f4f7f6;
+    --border-color: #e0e0e0;
+}
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: var(--bg-color);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Quan trọng: Đảm bảo body ít nhất cao bằng màn hình */
+}
+
+/* --- 1. HEADER --- */
+.main-header {
+    width: 100%;
+    background-color: #ffffff;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: center;
+    height: 60px;
+}
+
+.header-content {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-img { width: 32px; height: 32px; object-fit: contain; }
+.logo span { font-weight: bold; font-size: 18px; color: #333; }
+
+.nav-links { display: flex; list-style: none; gap: 30px; margin: 0; padding: 0; }
+.nav-links li { font-size: 14px; color: #666; cursor: pointer; font-weight: 500; }
+.nav-links li.active { color: var(--primary-color); font-weight: bold; }
+
+.user-actions { display: flex; align-items: center; gap: 20px; color: #555; }
+.user-avatar {
+    width: 35px; height: 35px; background-color: #f0f0f0;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: bold; color: var(--primary-color);
+    border: 1px solid var(--border-color);
+}
+
+
+/* Container chứa Avatar */
+.user-profile-container {
+    position: relative; /* Gốc tọa độ cho menu con */
+    cursor: pointer;
+}
+
+/* Menu thả xuống */
+.user-dropdown {
+    display: none; /* Ẩn đi lúc đầu */
+    position: absolute;
+    top: 45px; /* Cách avatar một khoảng */
+    right: 0;
+    width: 180px;
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    z-index: 1000;
+    padding: 10px 0;
+}
+
+/* Hiển thị khi có class active */
+.user-dropdown.active {
+    display: block;
+    animation: fadeIn 0.2s ease;
+}
+
+.dropdown-header {
+    padding: 5px 15px 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.dropdown-header strong { font-size: 14px; color: #333; }
+.dropdown-header span { font-size: 11px; color: #888; }
+
+.user-dropdown hr {
+    border: 0;
+    border-top: 1px solid #eee;
+    margin: 5px 0;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    text-decoration: none;
+    color: #555;
+    font-size: 13px;
+    transition: background 0.2s;
+}
+
+.dropdown-item:hover {
+    background-color: #f5f5f5;
+    color: var(--primary-color);
+}
+
+.logout-item {
+    color: #d32f2f; /* Màu đỏ cho nút đăng xuất */
+}
+
+.logout-item:hover {
+    background-color: #fff1f0;
+    color: #d32f2f;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+
+
+
+
+
+/* --- 2. BREADCRUMB --- */
+.breadcrumb-wrapper {
+    width: 100%;
+    background-color: #2d7a5d;
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+}
+
+.breadcrumb-content {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 8px 0;
+    color: #ffffff;
+    font-size: 13px;
+}
+.back-link { color: #fff; text-decoration: none; font-weight: 500; }
+.back-link:hover { text-decoration: underline; }
+
+
+/* --- 3. CONTAINER CHÍNH --- */
+.container1 {
+    width: 90%;
+    max-width: 1200px;
+    margin: 30px auto;
+    flex: 1; /* CỰC KỲ QUAN TRỌNG: Nó sẽ đẩy footer xuống dưới cùng */
+    display: flex;
+    flex-direction: column;
+}
+
+.page-header-list {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 25px;
+}
+
+.page-header-list h1 { font-size: 24px; margin: 0; }
+
+.header-btns { display: flex; gap: 10px; }
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white; border: none; padding: 10px 18px;
+    border-radius: 6px; cursor: pointer; font-weight: 600;
+}
+
+.btn-outline {
+    background: white; border: 1px solid #ccc;
+    padding: 10px 18px; border-radius: 6px; cursor: pointer;
+}
+
+/* --- 4. TABLE & FILTERS --- */
+.order-table-container {
+    width: 100%;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+/* Khung chứa tổng thể thanh lọc */
+.filter-section {
+    display: flex;
+    align-items: center;      /* CĂN GIỮA tất cả phần tử theo chiều dọc */
+    gap: 15px;                /* Khoảng cách giữa các cụm lọc */
+    background: white;
+    padding: 15px 20px;
+    border-radius: 12px 12px 0 0;
+    flex-wrap: wrap;          /* Cho phép nhảy dòng nếu màn hình quá nhỏ */
+}
+
+/* Cụm ô tìm kiếm */
+.search-main {
+    flex: 2;
+    display: flex;
+    align-items: center;      /* Căn giữa icon và input */
+    position: relative;
+    min-width: 200px;
+}
+
+.search-main i {
+    position: absolute;
+    left: 12px;
+    color: #999;
+}
+
+.search-main input {
+    width: 100%;
+    height: 38px;             /* ĐẶT ĐỘ CAO CỐ ĐỊNH */
+    padding: 0 10px 0 35px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #f8f9fa;
+    box-sizing: border-box;   /* Quan trọng để không bị lệch padding */
+}
+
+/* Cụm các ô Status, Priority, Dept */
+.filter-group {
+    display: flex;
+    align-items: center;      /* Căn giữa Label và Select */
+    gap: 10px;
+}
+
+.filter-group label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #555;
+    white-space: nowrap;      /* Không cho chữ bị xuống dòng */
+}
+
+.filter-group select {
+    height: 38px;             /* PHẢI BẰNG ĐỘ CAO CỦA Ô INPUT SEARCH */
+    min-width: 100px;
+    padding: 0 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #fff;
+    cursor: pointer;
+    font-size: 13px;
+    outline: none;
+}
+
+/* Nút icon cuối hàng */
+.btn-icon-filter {
+    height: 38px;             /* CŨNG PHẢI BẰNG 38PX */
+    width: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+
+.order-table { width: 100%; border-collapse: collapse; }
+.order-table th {
+    text-align: left; background: #fcfcfc; color: #888;
+    font-size: 11px; text-transform: uppercase;
+    padding: 15px 20px; border-bottom: 1px solid #eee;
+}
+.order-table td { padding: 15px 20px; border-bottom: 1px solid #f9f9f9; font-size: 14px; }
+
+/* Status Badges & Hover */
+.order-table tr:hover { background-color: #f8fbfa; }
+
+
+/* Khung cơ bản cho tất cả Badge */
+.badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 6px; /* Bo góc giống các nút của bạn */
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    min-width: 100px;
+    white-space: nowrap;
+}
+
+/* Các trạng thái cụ thể */
+.badge-draft { background-color: #f0f0f0; color: #757575; border: 1px solid #e0e0e0; }
+
+.badge-rejected { background-color: #fff1f0; color: #cf1322; border: 1px solid #ffa39e; }
+
+/* Awaiting Approval */
+.badge-awaiting { background-color: #feffe6; color: #856404; border: 1px solid #ffe58f; }
+
+.badge-confirmed { background-color: #f6ffed; color: #389e0d; border: 1px solid #b7eb8f; }
+
+.badge-prepared { background-color: #e6f7ff; color: #096dd9; border: 1px solid #91d5ff; }
+
+.badge-qc { background-color: #f9f0ff; color: #7d47ca; border: 1px solid #d3adf7; }
+
+.badge-shipping { background-color: #fff7e6; color: #d46b08; border: 1px solid #ffd591; }
+
+.badge-invoice { background-color: #fcffe6; color: #707e00; border: 1px solid #eaff8f; }
+
+.badge-completed { background-color: #f6ffed; color: #1b5e20; border: 1px solid #b7eb8f; }
+
+/* Priority */
+.priority-high { background-color: #fff1f0; color: #cf1322; border: 1px solid #ffa39e; }
+.priority-medium { background-color: #fffbe6; color: #d48806; border: 1px solid #ffe58f; }
+.priority-low { background-color: #f6ffed; color: #389e0d; border: 1px solid #b7eb8f; }
+
+/* Màu sắc cho Department */
+.dept-qc { background-color: #e3f2fd; color: #1976d2; border: 1px solid #bbdefb; }
+.dept-tech { background-color: #f3e5f5; color: #7b1fa2; border: 1px solid #e1bee7; }
+.dept-sales { background-color: #fff3e0; color: #f57c00; border: 1px solid #ffe0b2; }
+.dept-account { background-color: #e8eaf6; color: #3f51b5; border: 1px solid #c5cae9; }
+.dept-na { background-color: #f5f5f5; color: #9e9e9e; border: 1px solid #e0e0e0; }
+
+
+
+/* Màu cho Status (Nếu bạn muốn bổ sung) */
+.status-draft { color: #888; font-style: italic; }
+
+/* Căn chỉnh lại độ rộng cột ID cho nổi bật */
+.order-id-cell {
+    font-weight: bold;
+    color: #333;
+}
+
+/* --- 5. FOOTER --- */
+.main-footer {
+    width: 100%;
+    padding: 25px 0;
+    text-align: center;
+    color: #888;
+    font-size: 13px;
+    margin-top: 50px;
+    background: white;
+    border-top: 1px solid var(--border-color);
+}

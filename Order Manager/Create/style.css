@@ -1,0 +1,482 @@
+:root {
+    --primary-color: #2d7a5d;
+    --bg-color: #f4f7f6;
+    --border-color: #e0e0e0;
+}
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: var(--bg-color);
+    margin: 0; padding: 0;
+}
+
+/* Nhóm icon bên phải header */
+.user-actions {
+    display: flex;
+    align-items: center; /* Căn giữa các icon theo chiều dọc */
+    gap: 20px;           /* Khoảng cách giữa các icon */
+    color: #333;
+}
+
+.user-actions i {
+    font-size: 18px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.user-actions i:hover {
+    color: var(--primary-color);
+}
+
+/* Vòng tròn Avatar "JD" */
+.user-avatar {
+    width: 35px;
+    height: 35px;
+    background-color: #f0f0f0;
+    border-radius: 50%; /* Tạo hình tròn */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--primary-color);
+    border: 1px solid var(--border-color);
+}
+
+/* Container chứa Avatar */
+.user-profile-container {
+    position: relative; /* Gốc tọa độ cho menu con */
+    cursor: pointer;
+}
+
+/* Menu thả xuống */
+.user-dropdown {
+    display: none; /* Ẩn đi lúc đầu */
+    position: absolute;
+    top: 45px; /* Cách avatar một khoảng */
+    right: 0;
+    width: 180px;
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    z-index: 1000;
+    padding: 10px 0;
+}
+
+/* Hiển thị khi có class active */
+.user-dropdown.active {
+    display: block;
+    animation: fadeIn 0.2s ease;
+}
+
+.dropdown-header {
+    padding: 5px 15px 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.dropdown-header strong { font-size: 14px; color: #333; }
+.dropdown-header span { font-size: 11px; color: #888; }
+
+.user-dropdown hr {
+    border: 0;
+    border-top: 1px solid #eee;
+    margin: 5px 0;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    text-decoration: none;
+    color: #555;
+    font-size: 13px;
+    transition: background 0.2s;
+}
+
+.dropdown-item:hover {
+    background-color: #f5f5f5;
+    color: var(--primary-color);
+}
+
+.logout-item {
+    color: #d32f2f; /* Màu đỏ cho nút đăng xuất */
+}
+
+.logout-item:hover {
+    background-color: #fff1f0;
+    color: #d32f2f;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+
+
+/* --- HEADER TRẢI DÀI --- */
+.main-header {
+    width: 100%;
+    background-color: #ffffff;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: center;
+    height: 60px;
+}
+
+.header-content {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* --- FIX LOGO BÉ LẠI --- */
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-img {
+    width: 35px !important; /* Cố định kích thước nhỏ */
+    height: 35px !important;
+    object-fit: contain;
+}
+
+.logo span {
+    font-weight: bold;
+    font-size: 18px;
+    color: #333;
+}
+
+
+.search-container {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.search-input {
+    width: 0;
+    padding: 0;
+    border: none;
+    outline: none;
+    transition: all 0.3s ease;
+    background: transparent;
+    border-bottom: 1px solid var(--primary-color);
+}
+
+.search-input.active {
+    width: 150px;
+    padding: 5px;
+}
+
+
+
+
+
+/* --- MENU NGANG --- */
+.nav-links { display: flex; list-style: none; gap: 30px; margin: 0; padding: 0; }
+.nav-links li { font-size: 14px; color: #666; cursor: pointer; font-weight: 500; }
+.nav-links li.active { color: var(--primary-color); font-weight: bold; }
+/* --- NỘI DUNG CHÍNH --- */
+.container {
+    max-width: 900px;
+    margin: 25px auto;
+    padding: 0 20px;
+}
+
+.breadcrumb-link {
+    color: inherit; /* Giữ nguyên màu trắng/xanh của breadcrumb hiện tại */
+    text-decoration: none; /* Bỏ gạch chân */
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.breadcrumb-link:hover {
+    text-decoration: underline; /* Hiện gạch chân khi di chuột vào để người dùng biết có thể bấm */
+    opacity: 0.8;
+}
+
+.breadcrumb {
+    background: var(--primary-color);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 4px;
+    font-size: 13px;
+    margin-bottom: 20px;
+}
+
+.form-section {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.form-section h2 {
+    font-size: 18px;
+    color: #1a1a1a;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-top: 0;
+}
+
+.grid-2-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.input-group { display: flex; flex-direction: column; margin-bottom: 15px; }
+.input-group label { font-weight: 600; margin-bottom: 5px; font-size: 14px; }
+
+input, select, textarea {
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: #f9fbfb;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+
+
+select, textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: #fcfcfc;
+    font-size: 14px;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+/* Hiệu ứng khi nhấn vào ô nhập liệu */
+select:focus, textarea:focus {
+    border-color: var(--primary-color);
+    background-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(45, 122, 93, 0.1); /* Đổ bóng nhẹ màu xanh */
+}
+
+textarea {
+    height: 100px;
+    resize: vertical;
+    font-family: inherit; /* Đảm bảo font chữ trong textarea giống body */
+}
+
+
+
+.input-group-row {
+    display: flex;
+    align-items: flex-end; /* Căn đáy */
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.btn-add-item {
+    background-color: #eef7f4;
+    color: #2d7a5d;
+    border: 1px solid #d1e7dd;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    
+    /* Hiển thị dạng khối để quản lý lề tốt hơn */
+    display: inline-flex; 
+    align-items: center;
+    gap: 8px;
+    
+    /* Khoảng cách */
+    margin-top: 5px;    /* Cách ô Quantity phía trên */
+    margin-bottom: 25px; /* Cách chữ Special Requirements phía dưới */
+    
+    transition: all 0.2s;
+}
+
+.btn-add-item:hover {
+    background-color: #d1e7dd;
+}
+
+
+.grid-order {
+    display: grid;
+    /* Cột 1: 2 phần, Cột 2: 1 phần, Cột 3: 80px cho nút xóa */
+    grid-template-columns: 2fr 1fr 80px; 
+    gap: 15px;
+    align-items: flex-start;
+}
+
+/* Đảm bảo select và input chiếm hết chiều rộng cột */
+.grid-order select, 
+.grid-order input {
+    width: 100%;
+} 
+
+
+
+
+
+/* Ô Product Name: Chiếm hết khoảng trống còn lại */
+.product-item.custom-grid .input-group:first-child {
+    flex: 1;             /* Tự động kéo dài ra tối đa */
+}
+
+/* Ô Quantity: Giữ độ dài cố định hoặc vừa phải */
+.product-item.custom-grid .input-group:last-child {
+    flex: 0 0 200px;     /* Cố định độ dài ô Quantity là 200px (bạn có thể chỉnh con số này) */
+}
+
+.product-item.custom-grid {
+    display: grid !important;
+    /* Cột 1 (Name) giữ nguyên độ dài trung bình, 
+       Cột 2 (Quantity) dùng 1fr để chiếm hết phần còn lại đến mép Title */
+    grid-template-columns: 2fr 1fr; 
+    gap: 20px;
+    align-items: flex-end;
+    width: 100%; /* Đảm bảo tổng chiều ngang bằng với Order Title */
+}
+
+/* Đảm bảo các ô input bên trong lấp đầy cột của chúng */
+.prodName, .qty-control {
+    width: 100% !important;
+}
+
+.qty-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.prodQty {
+    flex: 1;             /* Ô số lượng chiếm hết phần của cột 200px */
+}
+
+.qty-control input {
+    flex: 1; /* Ô input chiếm hết không gian của cột Quantity */
+}
+
+/* Nút xóa */
+.btn-remove {
+    background: none;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-remove:hover {
+    color: #a71d2a;
+    text-decoration: underline;
+}
+
+
+/* Tạo khoảng cách giữa các Section */
+.form-section {
+    margin-bottom: 30px;
+}
+
+
+/* Sửa lại class full-width hoặc tạo class riêng cho Order Title */
+.order-title-group {
+    max-width: 900px; /* Giới hạn độ dài tối đa là 600px để không bị quá dài */
+    width: 100%;      /* Vẫn đảm bảo co giãn trên mobile */
+}
+
+/* Grid 3 cột cho mục số 4 */
+.grid-3-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 15px;
+}
+
+.full-width {
+    grid-column: span 2;
+}
+
+/* Khung Upload file */
+.upload-box {
+    border: 2px dashed var(--border-color);
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    background-color: #fafafa;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.upload-box:hover {
+    border-color: var(--primary-color);
+    background-color: #f0f7f4;
+}
+
+.upload-box i {
+    font-size: 30px;
+    color: #999;
+    margin-bottom: 10px;
+}
+
+.upload-box p {
+    margin: 5px 0;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.upload-box span {
+    font-size: 12px;
+    color: #888;
+}
+
+/* Nút bấm Save Draft */
+.btn-secondary {
+    background-color: #fff;
+    border: 1px solid var(--border-color);
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* Footer */
+.main-footer {
+    width: 100%;             /* Trải dài hết màn hình */
+    background-color: #fff;  /* Màu nền trắng */
+    padding: 20px 0;         /* Khoảng cách trên dưới */
+    border-top: 1px solid var(--border-color); /* Đường kẻ mờ ở trên */
+    text-align: center;      /* Căn giữa chữ */
+    color: #888;
+    font-size: 13px;
+    margin-top: 50px;        /* Đẩy footer cách xa các section phía trên */
+}
+
+

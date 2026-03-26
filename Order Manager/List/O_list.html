@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order List Dashboard</title>
+    <link rel="stylesheet" href="O_list.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="img/logo.jpeg" alt="Logo" class="logo-img">
+                <span>Order Management</span>
+            </div>
+            
+            <ul class="nav-links">
+                <li><a href="../S_dashboard/S_dash.html" style="text-decoration: none; color: inherit;">Dashboard</a></li>
+                <li class="active">Orders</li>
+                
+            </ul>
+            
+            <div class="user-actions">
+                <i class="fas fa-search"></i>
+                <i class="fas fa-bell"></i>
+    
+                <div class="user-profile-container">
+                    <div class="user-avatar" id="avatarTrigger">JD</div>
+        
+                        <div class="user-dropdown" id="userDropdown">
+                    <div class="dropdown-header">
+                            <strong>JD</strong>
+                            <span>Sales Department</span>
+                        </div>
+                        <hr>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-user-circle"></i> My Profile
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                        <hr>
+                        <a href="../Login/login.html" class="dropdown-item logout-item">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="breadcrumb-wrapper">
+        <div class="breadcrumb-content">
+            <a href="../S_dashboard/S_dash.html" class="back-link"></i> Dashboard</a>
+             > Order List
+        </div>
+    </div>
+
+    <div class="container1">
+        <header class="page-header-list">
+            <h1>Order List</h1>
+            <div class="header-btns">
+                <button class="btn-primary" onclick="window.location.href='../Create/index.html'">
+                    <i class="fas fa-plus"></i> Create New Order
+                </button>
+                <button class="btn-outline">
+                    <i class="fas fa-download"></i> Export
+                </button>
+            </div>
+        </header>
+
+        <main class="order-table-container">
+            <div class="filter-section">
+                <div class="search-main">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="mainSearch" placeholder="Search by Order ID, Customer, or Dept...">
+                </div>
+
+                <div class="filter-group">
+                    <label>Status:</label>
+                        <select id="statusFilter">
+                        <option value="All">All</option>
+                        <option value="Draft">Draft</option>
+                        <option value="Rejected">Rejected</option>
+                        <option value="Awaiting Approval">Awaiting Approval</option>
+                        <option value="Confirmed">Confirmed</option>
+                        <option value="Prepared">Prepared</option>
+                        <option value="QC Checked">QC Checked</option>
+                        <option value="Shipping">Shipping</option>
+                        <option value="Awaiting Invoice">Awaiting Invoice</option>
+                        <option value="Completed">Completed</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Priority:</label>
+                    <select id="priorityFilter">
+                        <option value="All">All</option>
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Department:</label>
+                    <select id="deptFilter">
+                        <option value="All">All</option>
+                        <option value="Tech">Tech</option>
+                        <option value="Account">Account</option>
+                        <option value="Sales">Sales</option>
+                    </select>
+                </div>
+
+                <button class="btn-icon-filter"><i class="fas fa-sliders-h"></i></button>
+            </div>
+
+            <table class="order-table">
+                <thead>
+                    <tr>
+                        <th>ORDER ID</th>
+                        <th>CUSTOMER</th>
+                        <th>DEPT</th> 
+                        <th>PRIORITY</th> 
+                        <th>STATUS</th>
+                        <th>DEADLINE</th>
+                        <th>ITEM</th>
+                        <th>CREATED DATE</th>
+                        <th>DETAIL</th>
+                    </tr>
+                </thead>
+                <tbody id="orderTableBody"></tbody>
+            </table>
+        </main>
+    </div>
+
+    <footer class="main-footer">
+        <p>© 2025 Order Management System. All rights reserved.</p>
+    </footer>
+    <script src="../api.js"></script>
+    <script src="O_list.js"></script>
+</body>
+</html>
