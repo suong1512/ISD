@@ -68,7 +68,7 @@ async function getAllOrders() {
       FROM order_items
       GROUP BY order_id
     ) ic ON ic.order_id = o.id
-    ORDER BY o.created_at DESC
+    ORDER BY o.updated_at DESC
   `);
 
   const mappedOrders = rows.map((order) => {
@@ -253,14 +253,13 @@ async function createDraftOrder(orderData) {
       qc_deadline,
       shipping_deadline,
       created_by,
-      items
+      items = []
     } = orderData;
-
-    const orderCode = await generateOrderCode(connection);
-    console.log('Generated orderCode = ', orderCode);
-
-    let totalAmount = 0;
+    
+    // Provide safe defaults for potentially missing fields in drafts
+    const finalOrderTitle = order_title || "New Draft Order";
     const finalItems = [];
+    let totalAmount = 0;
 
     for (const item of items) {
       console.log('Processing item = ', item);
@@ -298,6 +297,7 @@ async function createDraftOrder(orderData) {
     console.log('finalItems = ', finalItems);
     console.log('totalAmount = ', totalAmount);
 
+    const orderCode = await generateOrderCode(connection);
     const [orderResult] = await connection.query(
       `
       INSERT INTO orders (
@@ -323,19 +323,19 @@ async function createDraftOrder(orderData) {
       `,
       [
         orderCode,
-        order_title,
-        customer_name,
-        phone,
-        company_name,
-        address,
-        email,
-        notes,
-        special_requirements,
-        expected_delivery_date,
-        contract_reference,
-        prepare_deadline,
-        qc_deadline,
-        shipping_deadline,
+        finalOrderTitle,
+        customer_name || "",
+        phone || "",
+        company_name || "",
+        address || "",
+        email || "",
+        notes || "",
+        special_requirements || "",
+        expected_delivery_date || null,
+        contract_reference || "",
+        prepare_deadline || null,
+        qc_deadline || null,
+        shipping_deadline || null,
         'DRAFT',
         totalAmount,
         created_by
@@ -654,7 +654,7 @@ async function updateDraftOrder(orderId, orderData) {
       prepare_deadline,
       qc_deadline,
       shipping_deadline,
-      items
+      items = []
     } = orderData;
 
     // 3. tính lại items

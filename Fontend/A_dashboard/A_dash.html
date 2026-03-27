@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="A_dash.css">
+</head>
+<body>
+    <nav class="main-header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="../S_dashboard/img/logo.jpeg" alt="Logo" class="logo-img" onerror="this.src='https://via.placeholder.com/40'">
+                <span>Order Management</span>
+            </div>
+            <ul class="nav-links">
+                <li class="active">Dashboard</li>
+                <li><a href="../A_confirm/A_confirm.html" style="text-decoration: none; color: inherit;">Confirm</a></li>
+                <li><a href="../List/O_list.html" style="text-decoration: none; color: inherit;">Order List</a></li>
+            </ul>
+            <div class="user-actions">
+                <div class="user-profile-container">
+                    <div class="user-avatar" id="avatarTrigger">AD</div>
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="dropdown-header">
+                            <strong id="dropdownName">Admin Name</strong>
+                            <span>Administrator</span>
+                        </div>
+                        <hr>
+                        <a href="../gate/gate.html" class="dropdown-item logout-item" id="logoutBtn">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dashboard-container">
+        <div class="dashboard-header">
+            <div>
+                <h1>Admin Dashboard</h1>
+                <p class="subtitle">High-level order statistics and business status</p>
+            </div>
+            <div class="header-actions">
+                <span class="last-sync">Last updated: <strong id="lastSyncTime">--:--:--</strong></span>
+                <button class="btn-refresh" id="refreshBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
+            </div>
+        </div>
+
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <i class="fas fa-folder-open"></i>
+            <h3>No data available.</h3>
+            <p>There are currently no orders in the system.</p>
+        </div>
+
+        <div id="dashboardContent">
+            <!-- Summary KPI -->
+            <div class="kpi-cards">
+                <div class="kpi-card total-orders" onclick="goToOrderList('all')">
+                    <div class="kpi-info">
+                        <h3>Total Orders</h3>
+                        <p class="kpi-value" id="totalOrders">0</p>
+                    </div>
+                    <div class="kpi-icon"><i class="fas fa-boxes"></i></div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <!-- Status Chart -->
+                <div class="card chart-card">
+                    <h2>Orders by Status</h2>
+                    <div class="chart-container">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Status Counts -->
+                <div class="card stats-card">
+                    <h2>Status Breakdown</h2>
+                    <div class="stats-grid" id="statusGrid">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Priority Counts -->
+                <div class="card stats-card">
+                    <h2>Priority Breakdown</h2>
+                    <div class="stats-grid priority-grid" id="priorityGrid">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Department Counts -->
+                <div class="card stats-card">
+                    <h2>Department Breakdown</h2>
+                    <div class="stats-grid department-grid" id="departmentGrid">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../auth.js"></script>
+    <script src="../api.js"></script>
+    <script src="A_dash.js"></script>
+</body>
+</html>

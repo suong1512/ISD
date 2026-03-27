@@ -2,10 +2,10 @@ const attachmentService = require('../services/attachmentService');
 
 async function addOrderAttachment(req, res) {
   try {
-    console.log('content-type = ', req.headers['content-type']);
-    console.log('req.file = ', req.file);
-    console.log('req.body = ', req.body);
-    console.log('req.params = ', req.params);
+    console.log('--- ATTACHMENT CONTROLLER ---');
+    console.log('File:', req.file ? req.file.originalname : 'MISSING');
+    console.log('Body:', req.body);
+    console.log('Params:', req.params);
 
     const file_type = req.body?.file_type;
     const uploaded_by = req.body?.uploaded_by;

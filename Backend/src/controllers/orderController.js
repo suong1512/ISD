@@ -59,23 +59,9 @@ async function createDraftOrder(req, res) {
       items
     } = req.body;
 
-    if (
-      !order_title ||
-      !customer_name ||
-      !phone ||
-      !address ||
-      !email ||
-      !expected_delivery_date ||
-      !prepare_deadline ||
-      !qc_deadline ||
-      !shipping_deadline ||
-      !created_by ||
-      !items ||
-      !Array.isArray(items) ||
-      items.length === 0
-    ) {
+    if (!created_by) {
       return res.status(400).json({
-        message: 'Missing required fields'
+        message: 'created_by is required'
       });
     }
 

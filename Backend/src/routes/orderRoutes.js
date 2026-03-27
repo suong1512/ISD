@@ -12,12 +12,13 @@ router.patch('/:id/confirm', orderController.confirmOrder);
 router.patch('/:id/reject', orderController.rejectOrder);
 router.patch('/:id', orderController.updateDraftOrder);
 router.post(
-    '/:id/attachments',
-    (req, res, next) => {
-      console.log('UPLOAD route hit');
-      console.log('before multer content-type = ', req.headers['content-type']);
-      next();
-    },
+  '/:id/attachments',
+  (req, res, next) => {
+    console.log('--- UPLOAD ROUTE HIT ---');
+    console.log('Order ID:', req.params.id);
+    console.log('Content-Type:', req.headers['content-type']);
+    next();
+  },
     upload.single('file'),
     attachmentController.addOrderAttachment
   );

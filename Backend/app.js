@@ -5,6 +5,7 @@ const path = require('path');
 const pool = require('./src/config/db');
 const productRoutes = require('./src/routes/productRoutes');
 const orderRoutes = require('./src/routes/orderRoutes');
+const authRoutes = require('./src/routes/authRoutes');
 
 dotenv.config();
 
@@ -15,11 +16,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Serve frontend (Order Manager) as static files
-app.use('/app', express.static(path.join(__dirname, '..', 'Order Manager')));
+app.use('/app', express.static(path.join(__dirname, '..', 'Fontend')));
 
 app.get('/', (req, res) => {
-  res.redirect('/app/S_dashboard/S_dash.html');
+  res.redirect('/app/gate/gate.html');
 });
 
 app.get('/test-db', async (req, res) => {
@@ -66,6 +66,7 @@ app.get('/debug-db', async (req, res) => {
   }
 });
 
+app.use('/auth', authRoutes);
 app.use('/products', productRoutes);
 app.use('/orders', orderRoutes);
 
