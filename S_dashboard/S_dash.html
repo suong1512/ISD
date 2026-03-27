@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Dashboard</title>
+    <link rel="stylesheet" href="S_dash.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <nav class="main-header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="img/logo.jpeg" alt="Logo" class="logo-img">
+                <span>Order Management</span>
+            </div>
+            <ul class="nav-links">
+                <li class="active"><a href="S_dash.html" style="text-decoration: none; color: inherit;">Dashboard</a></li>
+                <li><a href="../List/O_list.html" style="text-decoration: none; color: inherit;">Orders</a></li>
+            </ul>
+            
+            
+            <div class="user-actions">
+                <i class="fas fa-search"></i>
+                <i class="fas fa-bell"></i>
+    
+                <div class="user-profile-container">
+                    <div class="user-avatar" id="avatarTrigger">JD</div>
+        
+                        <div class="user-dropdown" id="userDropdown">
+                    <div class="dropdown-header">
+                            <strong>JD</strong>
+                            <span>Sales Department</span>
+                        </div>
+                        <hr>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-user-circle"></i> My Profile
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                        <hr>
+                        <a href="../Login/login.html" class="dropdown-item logout-item">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="breadcrumb-wrapper">
+        <div class="breadcrumb-content">
+            Dashboard
+        </div>
+    </div>
+
+    <main class="main-container">
+        <header class="page-title">
+            <h1>Sales Performance Overview</h1>
+            <p>Welcome back, JD</p>
+        </header>
+
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon blue"><i class="fas fa-file-invoice"></i></div>
+                <div class="stat-info">
+                    <span class="stat-label">Total Orders</span>
+                    <h2 id="totalOrders">0</h2>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon orange"><i class="fas fa-clock"></i></div>
+                <div class="stat-info">
+                    <span class="stat-label">Pending</span>
+                    <h2 id="pendingOrders">0</h2>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+                <div class="stat-info">
+                    <span class="stat-label">Completed</span>
+                    <h2 id="completedOrders">0</h2>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon pink"><i class="fas fa-dollar-sign"></i></div>
+                <div class="stat-info">
+                    <span class="stat-label">Total Revenue</span>
+                    <h2 id="totalRevenue">$0</h2>
+                </div>
+            </div>
+        </section>
+
+        <section class="dashboard-details">
+            <div class="card-box chart-section">
+                <h3>Order Status Distribution</h3>
+                <div class="chart-container">
+                    <canvas id="orderChart"></canvas>
+                </div>
+            </div>
+            <div class="card-box activity-section">
+                <h3>Recent Notifications</h3>
+                <ul id="notificationList">
+                    </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer class="main-footer">
+        <p>© 2026 Order Management System. All rights reserved.</p>
+    </footer>
+
+    <script src="S_dash.js"></script>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Sales Order</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <nav class="main-header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="img/logo.jpeg" alt="Logo" class="logo-img">
+                <span>Order Management</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="../S_dashboard/S_dash.html" style="text-decoration: none; color: inherit;">Dashboard</a></li>
+                <li class="active">Orders</li>
+                
+            </ul>
+            <div class="user-actions">
+                <i class="fas fa-search"></i>
+                <i class="fas fa-bell"></i>
+    
+                <div class="user-profile-container">
+                    <div class="user-avatar" id="avatarTrigger">JD</div>
+        
+                        <div class="user-dropdown" id="userDropdown">
+                    <div class="dropdown-header">
+                            <strong>JD</strong>
+                            <span>Sales Department</span>
+                        </div>
+                        <hr>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-user-circle"></i> My Profile
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                        <hr>
+                        <a href="../Login/login.html" class="dropdown-item logout-item">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="../List/O_list.html" class="breadcrumb-link">Order List</a> 
+            > <span>Create New Order</span>
+        </div>
+        
+        <header class="page-header">
+            <h1>Create New Sales Order</h1>
+            <p>Complete the form below to register a new client order in the system.</p>
+        </header>
+
+        <form id="orderForm">
+            <section class="form-section">
+                <h2><i class="fas fa-user-circle"></i> 1. Customer Information </span></h2>
+                <div class="grid-layout">
+                    <div class="input-group">
+                        <label>Customer Name <span class="required">(*)</span></label>
+                        <input type="text" id="custName" required minlength="2" maxlength="100" placeholder="Full name">
+                    </div>
+                    <div class="input-group">
+                        <label>Phone Number <span class="required">(*)</span></label>
+                        <input type="tel" id="custPhone" required placeholder="10 digits (e.g. 0912345678)">
+                        <span id="phoneError" style="color: #ff4d4f; font-size: 11px; margin-top: 4px; display: none;">
+                            Invalid phone format (10 digits starting with 03,05,07,08,09)
+                        </span>
+                    </div>
+                    <div class="input-group">
+                        <label>Company Name </label>
+                        <input type="text" id="compName" minlength="2" maxlength="100" placeholder="Company name">
+                    </div>
+                    <div class="input-group">
+                        <label>Shipping Address <span class="required">(*)</span></label>
+                        <input type="text" id="custAddr" required minlength="5" maxlength="255" placeholder="Address">
+                    </div>
+                    <div class="input-group full-width">
+                        <label>Email Address <span class="required">(*)</span></label>
+                        <input type="email" id="custEmail" required placeholder="example@gmail.com">
+                        <span id="emailError" style="color: #ff4d4f; font-size: 11px; margin-top: 4px; display: none;">
+                            Please enter a valid @gmail.com address.
+                        </span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <h2><i class="fas fa-shopping-cart"></i> 2. Order Details</h2>
+    
+                
+
+                <div id="productList">
+                    <div class="product-item custom-grid" style="margin-bottom: 15px;">
+                        <div class="input-group">
+                            <label>Product Name <span class="required">(*)</span></label>
+                            <select class="prodName" required>
+                                <option value="">Select a product...</option>
+                                <option value="điện">Động cơ điện phòng nổ</option>
+                                <option value="giảm">Hộp giảm tốc</option>
+                                <option value="ngược">Bộ chống trôi ngược</option>
+                                <option value="múp">Múp nối thủy lực</option>
+                                <option value="phanh">Phanh điện thủy lực</option>
+                                <option value="tời">Tời căng băng</option>
+                                <option value="ep">Dây băng tải kháng cháy EP</option>
+                                <option value="nn">Dây băng NN</option>
+                                <option value="từ">Khởi động từ phòng nổ</option>
+                                <option value="át">Át tô mát phòng nổ</option>
+                                <option value="mềm">Khởi động mềm phòng nổ</option>
+                                <option value="tần">Biến tần phòng nổ</option>
+                                <option value="cảm">Các cảm biến</option>
+                                <option value="cáp">Cáp điện phòng nổ</option>
+                                <option value="nút">Nút bấm phòng nổ</option>
+                                <option value="chuông">Chuông điện phòng nổ</option>
+                                <option value="đèn">Đèn lốp phòng nổ</option>
+                                <option value="nối">Hộp nối cáp phòng nổ</option>
+                                <option value="chiếu">Biến áp chiếu sáng</option>
+                                <option value="pa">Pa lăng xích</option>
+                                <option value="bàn">Bàn nối ghim băng</option>
+                                <option value="tang">Tang điện</option>
+                                <option value="giá">Giá khung</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Quantity <span class="required">(*)</span></label>
+                            <div class="qty-control">
+                                <input type="number" class="prodQty" required min="1" max="10000" value="1">
+                                <div class="action-btn"></div> 
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="btn-add-item" id="add-product-btn">
+                    <i class="fas fa-plus"></i> Add Item
+                </button>
+
+
+                 <div class="input-group full-width">
+                    <label>Special Requirements</label>
+                    <input type="text" id="specialReq" placeholder="Custom branding, specific packaging, etc.">
+                </div>
+
+                <div class="input-group full-width">
+                    <label>Notes</label>
+                    <textarea rows="4" id="orderNotes" placeholder="Internal notes or additional instructions..."></textarea>
+                </div>
+            </section>
+
+           
+
+            <section class="form-section">
+                <h2><i class="fas fa-cog"></i> 3. Initial Settings</h2>
+                <div class="grid-2-cols">
+                    <div class="input-group">
+                        <label>Delivery Completion Deadline <span class="required">(*)</span></label>
+                        <input type="date" id="expectedDelivery" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Contract Reference <span class="required">(*)</span></label>
+                        <input type="text" id="contractRef" placeholder="e.g. CON..." required>
+                    </div>
+
+                    <div class="input-group full-width">
+                        <label>Attachments Contract (Customer) <span class="required">(*)</span></label>
+                        <div class="upload-box" id="boxCustomer">
+                            <input type="file" id="fileCustomer" hidden accept=".pdf,.zip">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p id="fileNameCustomer">Click to upload or drag and drop</p>
+                            <span>PDF or ZIP (Max 10MB)</span>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <section class="form-section">
+                <h2><i class="fas fa-clock"></i> 4. Order Deadlines </span></h2>
+                <div class="grid-3-cols">
+                    <div class="input-group">
+                        <label><i class="fas fa-calendar-alt"></i> Prepare Deadline <span class="required">(*)</span></label>
+                        <input type="date" id="deadlinePrepare" required>
+                    </div>
+                    <div class="input-group">
+                        <label><i class="fas fa-tasks"></i> QC Deadline <span class="required">(*)</span></label>
+                        <input type="date" id="deadlineQC" required>
+                    </div>
+                    <div class="input-group">
+                        <label><i class="fas fa-shipping-fast"></i> Shipping Deadline <span class="required">(*)</span></label>
+                        <input type="date" id="deadlineShipping" required>
+                    </div>
+                </div>
+            </section>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary btn-draft">Save Draft</button>
+                <button type="submit" class="btn btn-primary">Submit Order</button>
+            </div>
+        </form>  
+    </div>
+    <footer class="main-footer">
+        <p>© 2025 Order Management System. All rights reserved.</p>
+    </footer>
+    <script src="script.js"></script>
+</body>
+</html>
