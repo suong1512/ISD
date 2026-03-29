@@ -20,8 +20,8 @@ body {
 /* Nhóm icon bên phải header */
 .user-actions {
     display: flex;
-    align-items: center; /* Căn giữa các icon theo chiều dọc */
-    gap: 20px;           /* Khoảng cách giữa các icon */
+    align-items: center; 
+    gap: 20px;           
     color: #333;
 }
 

@@ -20,10 +20,7 @@ async function renderAdminOrders() {
         return;
     }
 
-    // Lọc đơn hàng đang chờ duyệt (PENDING_APPROVAL)
     const pendingOrders = allOrders.filter(order => order.status === "PENDING_APPROVAL");
-
-    // Cập nhật số lượng
     pendingCountBadge.innerHTML = `<i class="fas fa-clipboard-list"></i> ${pendingOrders.length} Pending`;
 
     if (pendingOrders.length === 0) {
@@ -69,13 +66,12 @@ async function renderAdminOrders() {
         </div>
     `).join('');
 
-    // Fetch order details parallel arrays to get attachments
     pendingOrders.forEach(order => {
         apiGet(`/orders/${order.id}`)
             .then(res => {
                 const data = res.data;
                 const attachments = data.attachments || [];
-                // Look for 'CUSTOMER' or any attachment created at order creation
+             
                 const customerFiles = attachments.filter(a => a.file_type === 'CUSTOMER');
                 const attachBox = document.getElementById(`attach-${order.id}`);
 
@@ -89,7 +85,6 @@ async function renderAdminOrders() {
                             else if (['xls', 'xlsx'].includes(ext)) icon = 'fa-file-excel';
                             else if (['jpg', 'jpeg', 'png'].includes(ext)) icon = 'fa-file-image';
 
-                            // Normalizing backslashes for path logic
                             const filePath = f.file_path ? f.file_path.replace(/\\/g, '/') : '';
 
                             return `<div class="file-info" style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
