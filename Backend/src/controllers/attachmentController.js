@@ -29,8 +29,10 @@ async function addOrderAttachment(req, res) {
       });
     }
 
+    const originalNameDecoded = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
+
     const attachments = await attachmentService.addOrderAttachment(id, {
-      file_name: req.file.originalname,
+      file_name: originalNameDecoded,
       file_type,
       file_path: `/uploads/${req.file.filename}`,
       uploaded_by
@@ -55,6 +57,18 @@ async function addOrderAttachment(req, res) {
   }
 }
 
+async function deleteOrderAttachment(req, res) {
+  try {
+    const { id, attachmentId } = req.params;
+    await attachmentService.deleteOrderAttachment(id, attachmentId);
+    return res.status(200).json({ message: 'Attachment deleted successfully' });
+  } catch (error) {
+    console.error('Error in deleteOrderAttachment:', error);
+    return res.status(500).json({ message: error.message || 'Internal server error' });
+  }
+}
+
 module.exports = {
-  addOrderAttachment
+  addOrderAttachment,
+  deleteOrderAttachment
 };

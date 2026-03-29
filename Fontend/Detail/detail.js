@@ -35,6 +35,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     document.getElementById('detCompany').innerText = currentOrder.company_name || "N/A";
     document.getElementById('detAddress').innerText = currentOrder.address || "No address";
     document.getElementById('detEmail').innerText = currentOrder.email || "N/A";
+    const phoneEl = document.getElementById('detPhone');
+    if (phoneEl) phoneEl.innerText = currentOrder.phone || "N/A";
 
     // Thông tin Logistics & Deadlines
     document.getElementById('detExpectedDate').innerText = currentOrder.expected_delivery_date || "---";
@@ -72,22 +74,35 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (fileName.match(/\.(xlsx|csv|xls)$/)) icon = "fa-file-excel";
             if (fileName.match(/\.(jpg|jpeg|png)$/)) icon = "fa-file-image";
 
-            const isSupplierFile = att.file_type === 'FILE ADDED';
+            // If file_type is CUSTOMER, it's from creation.
+            const isInitialFile = att.file_type === 'CUSTOMER';
+            const isSupplierFile = !isInitialFile;
             const downloadUrl = att.file_path; // Already starts with /uploads/
 
+            const deleteBtn = isSupplierFile ?
+                `<button onclick="deleteAttachment(${currentOrder.id}, ${att.id})" style="background:none; border:none; color:#d32f2f; cursor:pointer; padding:5px;"><i class="fas fa-trash"></i></button>` :
+                `<span style="font-size: 10px; color: #888; padding: 5px;"><i class="fas fa-lock"></i></span>`;
+
             return `
-                <a href="${downloadUrl}" download="${att.file_name}" class="file-item" target="_blank"
-                style="text-decoration: none; color: inherit; ${isSupplierFile ? 'border-left: 4px solid #2d7a5d; background: #f0f9f6;' : ''}">
-                    <span>
-                        <i class="fas ${icon}" style="margin-right: 8px; ${isSupplierFile ? 'color: #2d7a5d;' : ''}"></i> 
-                        ${att.file_name}
-                        ${att.uploaded_by_name ? `<small style="color:#888; margin-left:5px;">(by ${att.uploaded_by_name})</small>` : ''}
-                    </span>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        ${isSupplierFile ? '<span style="font-size: 9px; color: #2d7a5d; font-weight: bold;">SUPPLIER</span>' : ''}
-                        <i class="fas fa-download"></i>
+                <div style="display: flex; align-items: stretch; gap: 5px; margin-bottom: 8px;">
+                    <a href="${downloadUrl}" download="${att.file_name}" class="file-item" target="_blank"
+                    style="flex: 1; margin-bottom: 0px; text-decoration: none; color: inherit; ${isSupplierFile ? 'border-left: 4px solid #2d7a5d; background: #f0f9f6;' : ''}">
+                        <div style="display: flex; flex-direction: column;">
+                            <div style="font-weight: 500; word-break: break-all;">
+                                <i class="fas ${icon}" style="margin-right: 8px; ${isSupplierFile ? 'color: #2d7a5d;' : ''}"></i> 
+                                ${att.file_name}
+                            </div>
+                            ${att.uploaded_by_name ? `<div style="color:#888; font-size:11px; margin-top:4px;"><i class="fas fa-user-edit"></i> by ${att.uploaded_by_name}</div>` : ''}
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            ${isSupplierFile ? '<span style="font-size: 9px; color: #2d7a5d; font-weight: bold;">ADDED</span>' : ''}
+                            <i class="fas fa-download"></i>
+                        </div>
+                    </a>
+                    <div style="display: flex; align-items: center; justify-content: center; width: 30px;">
+                        ${deleteBtn}
                     </div>
-                </a>
+                </div>
             `;
         }).join('');
     } else {
@@ -111,6 +126,71 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
     if (fullName && dropdownName) {
         dropdownName.innerText = fullName;
+    }
+
+    // Initialize Notes
+    const notesContainer = document.getElementById('notesList');
+    if (notesContainer) {
+        let notesHTML = '';
+        if (currentOrder.notes) {
+            notesHTML += `
+                <div class="note-item readonly-note" style="background:#f9f9f9; padding: 10px; border-radius: 6px; border-left: 4px solid #888; margin-bottom: 10px; font-size: 13px;">
+                    <div style="font-weight: bold; color: #555; margin-bottom: 5px;"><i class="fas fa-lock" style="font-size: 10px;"></i> Creation Notes (Read-only)</div>
+                    <div style="color: #666; white-space: pre-wrap;">${currentOrder.notes}</div>
+                </div>
+            `;
+        }
+
+        // Example logic if we had other dynamically loaded internal notes:
+        notesContainer.innerHTML = notesHTML;
+
+        // Add Note functionality loading from LocalStorage
+        const localNotesKey = `internal_notes_${orderId}`;
+
+        function renderLocalNotes() {
+            let localNotesWrapper = document.getElementById('localNotesWrapper');
+            if (!localNotesWrapper) {
+                localNotesWrapper = document.createElement('div');
+                localNotesWrapper.id = 'localNotesWrapper';
+                notesContainer.appendChild(localNotesWrapper);
+            }
+
+            const currentLocalNotes = JSON.parse(localStorage.getItem(localNotesKey) || '[]');
+            localNotesWrapper.innerHTML = currentLocalNotes.map(note => `
+                <div class="note-item" style="background:#fff3cd; padding: 10px; border-radius: 6px; border-left: 4px solid #ffc107; margin-bottom: 10px; font-size: 13px;">
+                    <div style="font-weight: bold; color: #856404; margin-bottom: 5px; display: flex; justify-content: space-between;">
+                        <span><i class="fas fa-user"></i> ${note.author}</span>
+                        <span style="font-size: 11px; opacity: 0.8;">${note.time}</span>
+                    </div>
+                    <div style="color: #666; white-space: pre-wrap;">${note.text}</div>
+                </div>
+            `).join('');
+        }
+
+        renderLocalNotes();
+
+        const addNoteBtn = document.querySelector('.btn-add-note');
+        const newNoteInput = document.getElementById('newNoteInput');
+        if (addNoteBtn && newNoteInput) {
+            addNoteBtn.addEventListener('click', () => {
+                const text = newNoteInput.value.trim();
+                if (!text) return;
+
+                const currentUser = localStorage.getItem('currentUser') || 'Unknown User';
+                const newNote = {
+                    author: currentUser,
+                    time: new Date().toLocaleString('vi-VN'),
+                    text: text
+                };
+
+                const currentNotes = JSON.parse(localStorage.getItem(localNotesKey) || '[]');
+                currentNotes.push(newNote);
+                localStorage.setItem(localNotesKey, JSON.stringify(currentNotes));
+
+                newNoteInput.value = '';
+                renderLocalNotes();
+            });
+        }
     }
 
     // 7. Upload file từ trang Detail
@@ -279,5 +359,16 @@ function toggleHold() {
     } else {
         holdIcon.className = 'fas fa-pause-circle';
         holdText.innerText = "Hold";
+    }
+}
+
+window.deleteAttachment = async function (orderId, attachmentId) {
+    if (!confirm('Are you sure you want to delete this file?')) return;
+    try {
+        await apiDelete(`/orders/${orderId}/attachments/${attachmentId}`);
+        alert('File deleted successfully');
+        location.reload();
+    } catch (e) {
+        alert('Could not delete file: ' + e.message);
     }
 }

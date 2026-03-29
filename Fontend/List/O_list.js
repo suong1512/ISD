@@ -105,19 +105,54 @@ document.addEventListener('DOMContentLoaded', async function () {
         const filteredOrders = allOrders.filter(order => {
             const displayStatus = mapStatus(order.status);
             
-            // --- Determine Priority ---
-            let orderPriority = 'Low';
-            if (order.expected_delivery_date) {
-                const deliveryDate = new Date(order.expected_delivery_date);
-                const diffTime = deliveryDate - today;
+            // --- Determine Priority based on current task deadline ---
+            let orderPriority = 'None';
+            
+            // Pick the relevant deadline based on current status
+            let relevantDeadline = null;
+            let isDelayed = false;
+            
+            switch (order.status) {
+                case 'PREPARING':
+                    relevantDeadline = order.prepare_deadline;
+                    isDelayed = order.is_prepare_delayed;
+                    break;
+                case 'QC':
+                    relevantDeadline = order.qc_deadline;
+                    isDelayed = order.is_qc_delayed;
+                    break;
+                case 'SHIPPING':
+                    relevantDeadline = order.shipping_deadline;
+                    isDelayed = order.is_shipping_delayed;
+                    break;
+                case 'PENDING_APPROVAL':
+                case 'CONFIRMED':
+                    orderPriority = 'Low';
+                    break;
+                case 'DELIVERED':
+                case 'DRAFT':
+                case 'REJECTED':
+                default:
+                    orderPriority = 'None';
+                    break;
+            }
+            
+            if (isDelayed) {
+                // Backend already flagged this task as overdue
+                orderPriority = 'High';
+            } else if (relevantDeadline) {
+                const deadlineDate = new Date(relevantDeadline);
+                const diffTime = deadlineDate - today;
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-                if (diffDays < 0 || order.is_delivery_delayed) {
+                if (diffDays < 0) {
                     orderPriority = 'High';
                 } else if (diffDays <= 3) {
                     orderPriority = 'High';
                 } else if (diffDays <= 7) {
                     orderPriority = 'Medium';
+                } else {
+                    orderPriority = 'Low';
                 }
             }
 
@@ -132,6 +167,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
             order.displayPriority = orderPriority;
             order.displayDept = orderDept;
+            order.displayDeadline = relevantDeadline;
             
             // Lọc dữ liệu
             const matchesStatus = (filterStatus === "All" || displayStatus === filterStatus);
@@ -167,7 +203,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 <td><span class="badge ${deptClass}">${order.displayDept}</span></td>
                 <td><span class="badge priority-${priorityClass}">${order.displayPriority}</span></td>
                 <td><span class="badge ${statusClass}">${displayStatus}</span></td>
-                <td>${formatDate(order.shipping_deadline)}</td>
+                <td>${formatDate(order.displayDeadline || order.shipping_deadline)}</td>
                 <td>${itemCount}</td>
                 <td>${formatDate(order.created_at)}</td>
                 <td style="text-align: center;">

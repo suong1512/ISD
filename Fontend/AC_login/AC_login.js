@@ -1,4 +1,4 @@
-document.getElementById('loginForm').addEventListener('submit', async function(e) {
+document.getElementById('loginForm').addEventListener('submit', async function (e) {
     e.preventDefault();
 
     const email = document.getElementById('username').value.trim();

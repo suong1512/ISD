@@ -22,6 +22,7 @@ router.post(
     upload.single('file'),
     attachmentController.addOrderAttachment
   );
+router.delete('/:id/attachments/:attachmentId', attachmentController.deleteOrderAttachment);
 router.get('/:id', orderController.getOrderById);
 
 module.exports = router;

@@ -35,6 +35,17 @@ async function apiPatch(endpoint, body) {
     return res.json();
 }
 
+async function apiDelete(endpoint) {
+    const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'DELETE'
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: res.statusText }));
+        throw new Error(err.message || 'Request failed');
+    }
+    return res.json();
+}
+
 async function apiUploadFile(endpoint, file, fileType = 'CUSTOMER') {
     const formData = new FormData();
     formData.append('file', file);

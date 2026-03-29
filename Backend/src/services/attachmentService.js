@@ -65,6 +65,19 @@ async function addOrderAttachment(orderId, fileData) {
   }
 }
 
+async function deleteOrderAttachment(orderId, attachmentId) {
+  const connection = await pool.getConnection();
+  try {
+    await connection.query(
+      `DELETE FROM order_attachments WHERE id = ? AND order_id = ?`,
+      [attachmentId, orderId]
+    );
+  } finally {
+    connection.release();
+  }
+}
+
 module.exports = {
-  addOrderAttachment
+  addOrderAttachment,
+  deleteOrderAttachment
 };
