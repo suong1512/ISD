@@ -100,6 +100,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         // CHỈ KIỂM TRA RÀNG BUỘC KHI KHÔNG PHẢI LÀ DRAFT
         if (!isDraft) {
+            if (!orderForm.checkValidity()) {
+                orderForm.reportValidity();
+                return;
+            }
+
             let hasError = false;
 
             // 1. Validate Contract Reference
@@ -111,10 +116,15 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
 
             // 2. Validate Contract File
-            if (!editId && (!fileCustInput.files || fileCustInput.files.length === 0)) {
+            const fileNameDisplay = document.getElementById('fileNameCustomer');
+            const hasExistingFile = fileNameDisplay && fileNameDisplay.innerText.includes("Existing:");
+            if (!hasExistingFile && (!fileCustInput.files || fileCustInput.files.length === 0)) {
                 boxCustomer.style.borderColor = "#ff4d4f";
                 boxCustomer.style.backgroundColor = "rgba(255, 77, 79, 0.05)";
                 hasError = true;
+            } else {
+                boxCustomer.style.borderColor = "#e0e0e0";
+                boxCustomer.style.backgroundColor = "";
             }
 
             // 3. Validate Phone (Starts with 0, exactly 10 digits)

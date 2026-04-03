@@ -28,7 +28,42 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     // Initial load
     await loadDashboardData();
+
+
+    // Avatar
+    const initials = localStorage.getItem('userInitials');
+    const fullName = localStorage.getItem('currentUser');
+    const avatarElement = document.getElementById('avatarTrigger');
+    const dropdownName = document.querySelector('.dropdown-header strong');
+
+    if (initials && avatarElement) {
+        avatarElement.innerText = initials;
+    }
+    if (fullName && dropdownName) {
+        dropdownName.innerText = fullName;
+    }
 });
+
+
+// Dropdown Avatar
+document.addEventListener('DOMContentLoaded', function () {
+    const avatar = document.getElementById('avatarTrigger');
+    const dropdown = document.getElementById('userDropdown');
+
+    avatar.addEventListener('click', function (e) {
+        e.stopPropagation();
+        dropdown.classList.toggle('active');
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!avatar.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.remove('active');
+        }
+    });
+});
+
+
+
 
 let statusChartInstance = null;
 
@@ -36,12 +71,13 @@ let statusChartInstance = null;
 const STATUS_COLORS = {
     'confirmed': '#2e7d32',        // Green
     'awaiting approval': '#f9a825',// Yellow
-    'preparing': '#1976d2',        // Blue
-    'qc check': '#7b1fa2',         // Purple
+    'prepared': '#1976d2',         // Blue
+    'qc checked': '#7b1fa2',       // Purple
     'shipping': '#ef6c00',         // Orange
     'awaiting invoice': '#cddc39', // Lime
-    'delayed': '#d32f2f',          // Bright Red
-    'rejected': '#c62828'          // Dark Red
+    'overdue': '#d32f2f',          // Bright Red
+    'rejected': '#c62828',         // Dark Red
+    'completed': '#1b5e20'         // Dark Green
 };
 
 const PRIORITY_COLORS = {
@@ -58,10 +94,11 @@ const DEPT_COLORS = {
 
 async function loadDashboardData() {
     updateSyncTime();
-    
+
     try {
         const response = await apiGet('/orders');
-        const allOrders = response.data || [];
+        // Handle both formats: direct array or {data: []}
+        const allOrders = Array.isArray(response) ? response : (response.data || []);
 
         // Exclude Drafts
         const validOrders = allOrders.filter(o => (o.status || '').toUpperCase() !== 'DRAFT');
@@ -90,11 +127,12 @@ function processDashboardMetrics(orders) {
     const statusCounts = {
         'Confirmed': 0,
         'Awaiting Approval': 0,
-        'Preparing': 0,
-        'QC Check': 0,
+        'Prepared': 0,
+        'QC Checked': 0,
         'Shipping': 0,
         'Awaiting Invoice': 0,
-        'Delayed': 0,
+        'Completed': 0,
+        'Overdue': 0,
         'Rejected': 0,
         'Other': 0
     };
@@ -109,16 +147,18 @@ function processDashboardMetrics(orders) {
         let rawStatus = (order.status || '').toUpperCase();
         let displayStatus = 'Other';
 
-        if (rawStatus === 'PENDING_APPROVAL') displayStatus = 'Awaiting Approval';
+        if (rawStatus === 'AWAITING_APPROVAL') displayStatus = 'Awaiting Approval';
         else if (rawStatus === 'CONFIRMED') displayStatus = 'Confirmed';
-        else if (rawStatus === 'PREPARING') displayStatus = 'Preparing';
-        else if (rawStatus === 'QC') displayStatus = 'QC Check';
+        else if (rawStatus === 'PREPARING') displayStatus = 'Prepared';
+        else if (rawStatus === 'QC') displayStatus = 'QC Checked';
         else if (rawStatus === 'SHIPPING') displayStatus = 'Shipping';
+        else if (rawStatus === 'AWAITING_INVOICE') displayStatus = 'Awaiting Invoice';
+        else if (rawStatus === 'COMPLETED') displayStatus = 'Completed';
         else if (rawStatus === 'REJECTED') displayStatus = 'Rejected';
-        
-        // Check for Delayed (derived from flags or dates)
+
+        // Check for Overdue (derived from flags or dates)
         if (order.is_delivery_delayed || order.is_prepare_delayed || order.is_qc_delayed || order.is_shipping_delayed) {
-            displayStatus = 'Delayed';
+            displayStatus = 'Overdue';
         }
 
         if (statusCounts[displayStatus] !== undefined) {
@@ -148,7 +188,7 @@ function processDashboardMetrics(orders) {
         let dept = 'Sales';
         if (displayStatus === 'Awaiting Approval' || displayStatus === 'Confirmed' || displayStatus === 'Rejected') {
             dept = 'Sales';
-        } else if (displayStatus === 'Preparing' || displayStatus === 'QC Check' || displayStatus === 'Shipping' || displayStatus === 'Delayed') {
+        } else if (displayStatus === 'Prepared' || displayStatus === 'QC Checked' || displayStatus === 'Shipping' || displayStatus === 'Overdue') {
             dept = 'Technical';
         } else if (displayStatus === 'Awaiting Invoice') {
             dept = 'Accountant';
@@ -156,142 +196,114 @@ function processDashboardMetrics(orders) {
         deptCounts[dept]++;
     });
 
-    renderStatusGrid(statusCounts);
-    renderPriorityGrid(priorityCounts);
-    renderDepartmentGrid(deptCounts);
+    const inProgress = Object.keys(statusCounts).reduce((acc, key) => {
+        if (['Prepared', 'QC Checked', 'Shipping'].includes(key)) {
+            return acc + statusCounts[key];
+        }
+        return acc;
+    }, 0);
+
+    const delayed = statusCounts['Overdue'] || 0;
+    
+    // Mock QC Fail if we don't have rejection reasons
+    const qcFail = statusCounts['Rejected'] || 0;
+    const failRate = orders.length > 0 ? ((qcFail / orders.length) * 100).toFixed(2) : "0.00";
+
+    document.getElementById('totalOrders').innerText = orders.length.toLocaleString();
+    document.getElementById('kpiInProgress').innerText = inProgress.toLocaleString();
+    document.getElementById('kpiDelayed').innerText = delayed.toLocaleString();
+    document.getElementById('kpiQCFail').innerText = failRate + '%';
+
     renderChart(statusCounts, orders.length);
+    renderBottleneckChart(orders);
+    renderAlerts(orders);
+    renderActivity(orders);
 }
 
-function renderStatusGrid(counts) {
-    const grid = document.getElementById('statusGrid');
-    grid.innerHTML = '';
+function renderAlerts(orders) {
+    const container = document.getElementById('alertsContainer');
+    const badge = document.getElementById('liveIssuesBadge');
+    if (!container) return;
 
-    const keys = ['Awaiting Approval', 'Confirmed', 'Preparing', 'QC Check', 'Shipping', 'Delayed', 'Rejected'];
-    
-    keys.forEach(key => {
-        const val = counts[key];
-        const colorClass = getColorClassForStatus(key);
+    // Filter orders with any delay
+    const delayedOrders = orders.filter(o => o.is_delivery_delayed || o.is_qc_delayed || o.is_prepare_delayed || o.is_shipping_delayed);
+    badge.innerText = `${delayedOrders.length} LIVE ISSUES`;
+
+    if (delayedOrders.length === 0) {
+        container.innerHTML = '<p style="color: #666; font-size: 13px;">No critical delays detected at this time.</p>';
+        return;
+    }
+
+    // Show top 2 most recent delays
+    const topDelays = delayedOrders.slice(0, 2);
+    container.innerHTML = topDelays.map(o => {
+        const type = o.is_qc_delayed ? 'QC Overload' : (o.is_shipping_delayed ? 'Shipping Delay' : 'Processing Delay');
+        const boxClass = o.is_qc_delayed ? 'danger-box' : 'warning-box';
+        const icon = o.is_qc_delayed ? 'fa-bolt' : 'fa-arrow-down';
         
-        const el = document.createElement('div');
-        el.className = `stat-item ${colorClass}`;
-        el.onclick = () => goToOrderList(`status=${encodeURIComponent(key)}`);
-        el.innerHTML = `
-            <span class="stat-label">${key}</span>
-            <span class="stat-value">${val}</span>
+        return `
+            <div class="alert-box ${boxClass}">
+                <div class="alert-box-icon"><i class="fas ${icon}"></i></div>
+                <div class="alert-box-content">
+                    <div class="alert-box-header">
+                        <strong>${type} - Order #${o.order_code}</strong>
+                        <span>Just now</span>
+                    </div>
+                    <p>${o.customer_name || 'Customer'} is waiting for this order. Status: ${mapStatus(o.status)}.</p>
+                </div>
+            </div>
         `;
-        grid.appendChild(el);
-    });
+    }).join('');
 }
 
-function renderPriorityGrid(counts) {
-    const grid = document.getElementById('priorityGrid');
-    grid.innerHTML = '';
-    
-    ['High', 'Medium', 'Low'].forEach(key => {
-        const val = counts[key];
-        const colorStyle = `border-left-color: ${PRIORITY_COLORS[key.toLowerCase()]};`;
-        
-        const el = document.createElement('div');
-        el.className = 'stat-item';
-        el.style = colorStyle;
-        el.onclick = () => goToOrderList(`priority=${encodeURIComponent(key)}`);
-        el.innerHTML = `
-            <span class="stat-label">${key}</span>
-            <span class="stat-value">${val}</span>
-        `;
-        grid.appendChild(el);
-    });
-}
+function renderActivity(orders) {
+    const container = document.getElementById('activityHistory');
+    if (!container) return;
 
-function renderDepartmentGrid(counts) {
-    const grid = document.getElementById('departmentGrid');
-    grid.innerHTML = '';
+    // Get 4 most recent orders
+    const recent = [...orders].sort((a,b) => b.id - a.id).slice(0, 4);
     
-    ['Sales', 'Technical', 'Accountant'].forEach(key => {
-        const val = counts[key];
-        const colorStyle = `border-left-color: ${DEPT_COLORS[key.toLowerCase()]};`;
-        
-        const el = document.createElement('div');
-        el.className = 'stat-item';
-        el.style = colorStyle;
-        el.onclick = () => goToOrderList(`dept=${encodeURIComponent(key)}`);
-        el.innerHTML = `
-            <span class="stat-label">${key}</span>
-            <span class="stat-value">${val}</span>
+    container.innerHTML = recent.map(o => {
+        let ringClass = 'ring-gray';
+        if (o.status === 'SHIPPING' || o.status === 'COMPLETED') ringClass = 'ring-blue';
+        if (o.status === 'REJECTED') ringClass = 'ring-red';
+
+        return `
+            <li>
+                <div class="timeline-ring ${ringClass}"></div>
+                <div class="timeline-content">
+                    <div class="timeline-header">
+                        <strong>Order #${o.order_code} ${mapStatus(o.status)}</strong>
+                        <span>${new Date(o.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                    </div>
+                    <p>${o.customer_name || 'Anonymous'} - ${o.order_title || 'No Title'}</p>
+                </div>
+            </li>
         `;
-        grid.appendChild(el);
-    });
+    }).join('');
 }
 
 function renderChart(counts, total) {
-    const ctx = document.getElementById('statusChart').getContext('2d');
-    
-    const labels = [];
-    const data = [];
-    const bgColors = [];
-
-    Object.keys(counts).forEach(key => {
-        if (counts[key] > 0 && key !== 'Other') {
-            labels.push(key);
-            data.push(counts[key]);
-            bgColors.push(STATUS_COLORS[key.toLowerCase()] || '#999');
-        }
-    });
-
-    if (statusChartInstance) {
-        statusChartInstance.destroy();
+    // Retry polling until babel parses the JSX
+    if (window.renderStatusChartRecharts) {
+        window.renderStatusChartRecharts(counts, total);
+    } else {
+        setTimeout(() => renderChart(counts, total), 100);
     }
-
-    statusChartInstance = new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: data,
-                backgroundColor: bgColors,
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'right'
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const value = context.raw;
-                            const percentage = ((value / total) * 100).toFixed(1);
-                            return `${context.label}: ${value} (${percentage}%)`;
-                        }
-                    }
-                }
-            }
-        }
-    });
 }
 
-function getColorClassForStatus(status) {
-    const map = {
-        'Awaiting Approval': 'border-yellow',
-        'Confirmed': 'border-green',
-        'Preparing': 'border-blue',
-        'QC Check': 'border-purple',
-        'Shipping': 'border-orange',
-        'Awaiting Invoice': 'border-lime',
-        'Delayed': 'border-brightred',
-        'Rejected': 'border-darkred'
-    };
-    return map[status] || 'border-blue';
+function renderBottleneckChart(orders) {
+    if (window.renderBottleneckChartRecharts) {
+        window.renderBottleneckChartRecharts(orders);
+    } else {
+        setTimeout(() => renderBottleneckChart(orders), 100);
+    }
 }
 
 function updateSyncTime() {
-    const now = new Date();
-    document.getElementById('lastSyncTime').innerText = now.toLocaleTimeString();
+    // No element in HTML for this yet, skipping to avoid errors
 }
 
 function goToOrderList(filterParam) {
-    window.location.href = `../A_confirm/A_confirm.html`;
+    window.location.href = `../List/A_list.html`;
 }

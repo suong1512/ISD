@@ -484,7 +484,7 @@ async function createSubmittedOrder(orderData) {
         prepare_deadline,
         qc_deadline,
         shipping_deadline,
-        'PENDING_APPROVAL',
+        'AWAITING_APPROVAL',
         totalAmount,
         created_by
       ]
@@ -546,8 +546,8 @@ async function confirmOrder(orderId, confirmedBy) {
 
     const order = orderRows[0];
 
-    if (order.status !== 'PENDING_APPROVAL') {
-      throw new Error('Only orders in PENDING_APPROVAL can be confirmed');
+    if (order.status !== 'AWAITING_APPROVAL') {
+      throw new Error('Only orders in AWAITING_APPROVAL can be confirmed');
     }
 
     await connection.query(
@@ -593,8 +593,8 @@ async function rejectOrder(orderId) {
 
     const order = orderRows[0];
 
-    if (order.status !== 'PENDING_APPROVAL') {
-      throw new Error('Only orders in PENDING_APPROVAL can be rejected');
+    if (order.status !== 'AWAITING_APPROVAL') {
+      throw new Error('Only orders in AWAITING_APPROVAL can be rejected');
     }
 
     await connection.query(
@@ -792,7 +792,7 @@ async function submitDraftOrder(orderId) {
     await connection.query(
       `
       UPDATE orders
-      SET status = 'PENDING_APPROVAL',
+      SET status = 'AWAITING_APPROVAL',
           updated_at = NOW()
       WHERE id = ?
       `,

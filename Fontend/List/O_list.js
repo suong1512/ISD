@@ -1,20 +1,20 @@
 // 1. Hàm bổ trợ lấy Class CSS cho Badge
 function getStatusClass(status) {
     const s = (status || "").toLowerCase();
-    if (s.includes("awaiting approval")) return "badge-awaiting";
-    if (s.includes("qc checked")) return "badge-qc";
-    if (s.includes("awaiting invoice")) return "badge-invoice";
-    if (s.includes("rejected")) return "badge-rejected";
-    if (s.includes("confirmed")) return "badge-confirmed";
-    if (s.includes("prepared") || s.includes("prepare")) return "badge-prepared";
-    if (s.includes("shipping")) return "badge-shipping";
-    if (s.includes("completed") || s.includes("delivered")) return "badge-completed";
-    return "badge-draft"; 
+    if (s.includes("awaiting approval")) return "badge-urgent";
+    if (s.includes("qc checked")) return "badge-purple";
+    if (s.includes("awaiting invoice")) return "badge-lime";
+    if (s.includes("rejected")) return "badge-danger";
+    if (s.includes("confirmed") || s.includes("completed")) return "badge-success";
+    if (s.includes("prepared") || s.includes("prepare")) return "badge-info";
+    if (s.includes("shipping")) return "badge-orange";
+    if (s.includes("overdue")) return "badge-danger";
+    return "badge-neutral";
 }
 
 // 2. Hàm điều hướng
 function goToDetail(id, status) {
-    if(!id || id === 'undefined' || id === 'N/A') {
+    if (!id || id === 'undefined' || id === 'N/A') {
         alert("Invalid ID");
         return;
     }
@@ -78,12 +78,12 @@ document.addEventListener('DOMContentLoaded', async function () {
     try {
         const response = await apiGet('/orders');
         let fetchedOrders = response.data || [];
-        
+
         const authUser = JSON.parse(localStorage.getItem('authUser')) || {};
         if (authUser.role === 'ADMIN') {
             fetchedOrders = fetchedOrders.filter(o => o.status !== 'DRAFT');
         }
-        
+
         allOrders = fetchedOrders;
     } catch (error) {
         console.error('Failed to load orders:', error);
@@ -104,14 +104,14 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         const filteredOrders = allOrders.filter(order => {
             const displayStatus = mapStatus(order.status);
-            
+
             // --- Determine Priority based on current task deadline ---
             let orderPriority = 'None';
-            
+
             // Pick the relevant deadline based on current status
             let relevantDeadline = null;
             let isDelayed = false;
-            
+
             switch (order.status) {
                 case 'PREPARING':
                     relevantDeadline = order.prepare_deadline;
@@ -125,18 +125,18 @@ document.addEventListener('DOMContentLoaded', async function () {
                     relevantDeadline = order.shipping_deadline;
                     isDelayed = order.is_shipping_delayed;
                     break;
-                case 'PENDING_APPROVAL':
+                case 'AWAITING_APPROVAL':
                 case 'CONFIRMED':
                     orderPriority = 'Low';
                     break;
-                case 'DELIVERED':
+                case 'COMPLETED':
                 case 'DRAFT':
                 case 'REJECTED':
                 default:
                     orderPriority = 'None';
                     break;
             }
-            
+
             if (isDelayed) {
                 // Backend already flagged this task as overdue
                 orderPriority = 'High';
@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             let orderDept = 'Sales';
             if (displayStatus === 'Awaiting Approval' || displayStatus === 'Confirmed' || displayStatus === 'Rejected') {
                 orderDept = 'Sales';
-            } else if (displayStatus === 'Preparing' || displayStatus === 'QC Check' || displayStatus === 'Shipping' || displayStatus === 'Delayed') {
+            } else if (displayStatus === 'Prepared' || displayStatus === 'QC Checked' || displayStatus === 'Shipping' || displayStatus === 'Overdue') {
                 orderDept = 'Tech';
             } else if (displayStatus === 'Awaiting Invoice') {
                 orderDept = 'Account';
@@ -168,12 +168,12 @@ document.addEventListener('DOMContentLoaded', async function () {
             order.displayPriority = orderPriority;
             order.displayDept = orderDept;
             order.displayDeadline = relevantDeadline;
-            
+
             // Lọc dữ liệu
             const matchesStatus = (filterStatus === "All" || displayStatus === filterStatus);
             const matchesPriority = (filterPriority === "All" || orderPriority === filterPriority);
             const matchesDept = (filterDept === "All" || orderDept === filterDept);
-            
+
             const orderCode = order.order_code ? String(order.order_code).toLowerCase() : "";
             const customerName = order.customer_name ? String(order.customer_name).toLowerCase() : "";
             const matchesSearch = (orderCode.includes(searchTerm) || customerName.includes(searchTerm));
@@ -200,12 +200,12 @@ document.addEventListener('DOMContentLoaded', async function () {
             row.innerHTML = `
                 <td class="order-id-cell">#${order.order_code || 'N/A'}</td>
                 <td>${order.customer_name || 'N/A'}</td>
-                <td><span class="badge ${deptClass}">${order.displayDept}</span></td>
-                <td><span class="badge priority-${priorityClass}">${order.displayPriority}</span></td>
-                <td><span class="badge ${statusClass}">${displayStatus}</span></td>
-                <td>${formatDate(order.displayDeadline || order.shipping_deadline)}</td>
-                <td>${itemCount}</td>
-                <td>${formatDate(order.created_at)}</td>
+                <td style="text-align: center;"><span class="badge ${deptClass}">${order.displayDept}</span></td>
+                <td style="text-align: center;"><span class="badge priority-${priorityClass}">${order.displayPriority}</span></td>
+                <td style="text-align: center;"><span class="badge ${statusClass}">${displayStatus}</span></td>
+                <td style="text-align: center;">${formatDate(order.displayDeadline || order.shipping_deadline)}</td>
+                <td style="text-align: center;">${itemCount}</td>
+                <td style="text-align: center;">${formatDate(order.created_at)}</td>
                 <td style="text-align: center;">
                     <i class="fas fa-external-link-alt" 
                        style="cursor:pointer; color: #2d7a5d; font-size: 16px;" 
@@ -218,7 +218,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     // Gán sự kiện lọc
     [searchInput, statusFilter, priorityFilter, deptFilter].forEach(el => {
-        if(el) {
+        if (el) {
             el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', renderOrders);
         }
     });
@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const initials = localStorage.getItem('userInitials');
     const fullName = localStorage.getItem('currentUser');
     const authUser = JSON.parse(localStorage.getItem('authUser')) || {};
-    
+
     if (authUser.role === 'ADMIN') {
         // 1. Redirect links pointing to S_dash back to A_dash and override breadcrumb text
         document.querySelectorAll('a[href*="S_dash.html"]').forEach(a => {
@@ -273,16 +273,16 @@ document.addEventListener('DOMContentLoaded', async function () {
 });
 
 // Dropdown Avatar
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const avatar = document.getElementById('avatarTrigger');
     const dropdown = document.getElementById('userDropdown');
 
-    avatar.addEventListener('click', function(e) {
+    avatar.addEventListener('click', function (e) {
         e.stopPropagation();
         dropdown.classList.toggle('active');
     });
 
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (!avatar.contains(e.target) && !dropdown.contains(e.target)) {
             dropdown.classList.remove('active');
         }

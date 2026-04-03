@@ -20,7 +20,7 @@ async function renderAdminOrders() {
         return;
     }
 
-    const pendingOrders = allOrders.filter(order => order.status === "PENDING_APPROVAL");
+    const pendingOrders = allOrders.filter(order => order.status === "AWAITING_APPROVAL");
     pendingCountBadge.innerHTML = `<i class="fas fa-clipboard-list"></i> ${pendingOrders.length} Pending`;
 
     if (pendingOrders.length === 0) {
@@ -40,13 +40,13 @@ async function renderAdminOrders() {
                     <span class="order-label">ORDER</span>
                     <div class="order-number">${order.order_code || '#' + order.id}</div>
                 </div>
-                <a href="javascript:void(0)" class="view-detail" onclick="goToDetail('${order.id}')">Order Detail</a>
+                <i class="fas fa-external-link-alt" style="cursor:pointer; color: #2d7a5d; font-size: 18px;" onclick="goToDetail('${order.id}')" title="Order Detail"></i>
             </div>
             
             <div class="customer-name">
                 <i class="fas fa-building"></i> ${order.customer_name || 'N/A'}
             </div>
-            <span class="status-tag">Awaiting Approval</span>
+            <span class="badge badge-urgent">Awaiting Approval</span>
 
             <div class="attachment-box" id="attach-${order.id}" style="padding: 10px; background: #f8f9fa; border-radius: 6px; margin: 15px 0;">
                 <div class="file-info" style="color: #666;">

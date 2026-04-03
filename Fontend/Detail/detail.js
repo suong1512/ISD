@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             <div class="product-card">
                 <h3>${item.product_name || 'Unknown Product'}</h3>
                 <p>Qty: <strong>${item.quantity || 0}</strong> Units</p>
-                <p style="font-size: 12px; color: #888;">Unit Price: $${Number(item.unit_price).toLocaleString()} | Subtotal: $${Number(item.subtotal).toLocaleString()}</p>
+            
             </div>
         `).join('');
     } else {
@@ -236,27 +236,21 @@ function renderStatusBadge(status) {
     if (!statusBadge) return;
 
     statusBadge.innerText = status.toUpperCase();
+    statusBadge.className = "badge"; // Reset classes
 
-    const colors = {
-        'draft': { bg: '#eeeeee', text: '#666666' },
-        'awaiting approval': { bg: '#fff8e1', text: '#f9a825' },
-        'confirmed': { bg: '#e8f5e9', text: '#2e7d32' },
-        'rejected': { bg: '#ffebee', text: '#c62828' },
-        'prepare': { bg: '#e3f2fd', text: '#1976d2' },
-        'qc checked': { bg: '#f3e5f5', text: '#7b1fa2' },
-        'shipping': { bg: '#e0f2f1', text: '#00695c' },
-        'completed': { bg: '#e8f5e9', text: '#2e7d32' },
-        'delayed': { bg: '#fff3e0', text: '#ef6c00' },
-        'in progress': { bg: '#e3f2fd', text: '#1976d2' }
-    };
+    const s = (status || "").toLowerCase();
+    let variant = "badge-neutral";
+    if (s.includes("awaiting approval")) variant = "badge-urgent";
+    else if (s.includes("qc checked")) variant = "badge-purple";
+    else if (s.includes("awaiting invoice")) variant = "badge-lime";
+    else if (s.includes("rejected")) variant = "badge-danger";
+    else if (s.includes("confirmed") || s.includes("completed")) variant = "badge-success";
+    else if (s.includes("prepared") || s.includes("prepare")) variant = "badge-info";
+    else if (s.includes("shipping")) variant = "badge-orange";
+    else if (s.includes("overdue")) variant = "badge-danger";
 
-    const style = colors[status.toLowerCase()] || colors['draft'];
-    statusBadge.style.backgroundColor = style.bg;
-    statusBadge.style.color = style.text;
-    statusBadge.style.padding = "4px 12px";
-    statusBadge.style.borderRadius = "20px";
-    statusBadge.style.fontSize = "12px";
-    statusBadge.style.fontWeight = "bold";
+    statusBadge.classList.add(variant);
+    statusBadge.removeAttribute('style');
 }
 
 function updateTimeline(status) {

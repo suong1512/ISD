@@ -74,13 +74,15 @@ async function apiUploadFile(endpoint, file, fileType = 'CUSTOMER') {
 // Status mapping: Backend ENUM -> Frontend display text
 const STATUS_MAP = {
     'DRAFT': 'Draft',
-    'PENDING_APPROVAL': 'Awaiting Approval',
-    'CONFIRMED': 'Confirmed',
+    'AWAITING_APPROVAL': 'Awaiting Approval',
     'REJECTED': 'Rejected',
-    'PREPARING': 'Prepare',
+    'CONFIRMED': 'Confirmed',
+    'PREPARING': 'Prepared',
     'QC': 'QC Checked',
     'SHIPPING': 'Shipping',
-    'DELIVERED': 'Completed'
+    'AWAITING_INVOICE': 'Awaiting Invoice',
+    'COMPLETED': 'Completed',
+    'OVERDUE': 'Overdue'
 };
 
 function mapStatus(backendStatus) {

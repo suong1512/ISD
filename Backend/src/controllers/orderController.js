@@ -157,7 +157,7 @@ async function confirmOrder(req, res) {
       });
     }
 
-    if (error.message === 'Only orders in PENDING_APPROVAL can be confirmed') {
+    if (error.message === 'Only orders in AWAITING_APPROVAL can be confirmed') {
       return res.status(400).json({
         message: error.message
       });
@@ -188,7 +188,7 @@ async function rejectOrder(req, res) {
       });
     }
 
-    if (error.message === 'Only orders in PENDING_APPROVAL can be rejected') {
+    if (error.message === 'Only orders in AWAITING_APPROVAL can be rejected') {
       return res.status(400).json({
         message: error.message
       });

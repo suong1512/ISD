@@ -11,8 +11,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // 2. Thống kê
     const total = orders.length;
-    const pending = orders.filter(o => ['DRAFT', 'PENDING_APPROVAL'].includes(o.status)).length;
-    const completed = orders.filter(o => o.status === "DELIVERED").length;
+    const pending = orders.filter(o => ['DRAFT', 'AWAITING_APPROVAL'].includes(o.status)).length;
+    const completed = orders.filter(o => o.status === "COMPLETED").length;
     
     // Tính doanh thu từ total_amount
     const revenue = orders.reduce((sum, o) => {
