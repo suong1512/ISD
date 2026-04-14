@@ -254,6 +254,118 @@ async function submitDraftOrder(req, res) {
   }
 }
 
+async function prepareOrder(req, res) {
+  try {
+    const { id } = req.params;
+    const { confirmed_by } = req.body;
+
+    const order = await orderService.prepareOrder(id, confirmed_by);
+
+    return res.status(200).json({
+      message: 'Order marked as Prepared successfully',
+      data: order
+    });
+  } catch (error) {
+    console.error('Error in prepareOrder:', error);
+
+    if (error.message === 'Order not found') {
+      return res.status(404).json({ message: error.message });
+    }
+
+    if (error.message.includes('CONFIRMED')) {
+      return res.status(400).json({ message: error.message });
+    }
+
+    return res.status(500).json({
+      message: error.message || 'Internal server error'
+    });
+  }
+}
+
+async function qcOrder(req, res) {
+  try {
+    const { id } = req.params;
+    const { confirmed_by } = req.body;
+
+    const order = await orderService.qcOrder(id, confirmed_by);
+
+    return res.status(200).json({
+      message: 'Order passed QC successfully',
+      data: order
+    });
+  } catch (error) {
+    console.error('Error in qcOrder:', error);
+
+    if (error.message === 'Order not found') {
+      return res.status(404).json({ message: error.message });
+    }
+
+    if (error.message.includes('PREPARING')) {
+      return res.status(400).json({ message: error.message });
+    }
+
+    return res.status(500).json({
+      message: error.message || 'Internal server error'
+    });
+  }
+}
+
+async function shipOrder(req, res) {
+  try {
+    const { id } = req.params;
+    const { confirmed_by } = req.body;
+
+    const order = await orderService.shipOrder(id, confirmed_by);
+
+    return res.status(200).json({
+      message: 'Order shipped successfully',
+      data: order
+    });
+  } catch (error) {
+    console.error('Error in shipOrder:', error);
+
+    if (error.message === 'Order not found') {
+      return res.status(404).json({ message: error.message });
+    }
+
+    if (error.message.includes('QC')) {
+      return res.status(400).json({ message: error.message });
+    }
+
+    return res.status(500).json({
+      message: error.message || 'Internal server error'
+    });
+  }
+}
+
+async function completeOrder(req, res) {
+  try {
+    const { id } = req.params;
+    const { confirmed_by } = req.body;
+
+    const order = await orderService.completeOrder(id, confirmed_by);
+
+    return res.status(200).json({
+      message: 'Order completed successfully',
+      data: order
+    });
+  } catch (error) {
+    console.error('Error in completeOrder:', error);
+
+    if (error.message === 'Order not found') {
+      return res.status(404).json({ message: error.message });
+    }
+
+    if (error.message.includes('AWAITING_INVOICE')) {
+      return res.status(400).json({ message: error.message });
+    }
+
+    return res.status(500).json({
+      message: error.message || 'Internal server error'
+    });
+  }
+}
+
 module.exports = {
   getAllOrders,
   getOrderById,
@@ -262,5 +374,9 @@ module.exports = {
   confirmOrder,
   rejectOrder,
   updateDraftOrder,
-  submitDraftOrder
+  submitDraftOrder,
+  prepareOrder,
+  qcOrder,
+  shipOrder,
+  completeOrder
 };

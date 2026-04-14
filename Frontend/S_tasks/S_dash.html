@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sale Task - Order Management</title>
+    <meta name="description" content="Sales task overview - manage orders through the sales workflow pipeline.">
+    <link rel="stylesheet" href="../global.css">
+    <link rel="stylesheet" href="../list/O_list.css">
+    <link rel="stylesheet" href="S_dash.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <nav class="main-header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="../img/logo.jpeg" alt="Logo" class="logo-img">
+                <span>Order Management</span>
+            </div>
+
+            <ul class="nav-links">
+                <li class="active">Sale Task</li>
+                <li><a href="../S_create_order/index.html">Create Order</a></li>
+                <li><a href="../S_preparing/preparing.html">Preparing</a></li>
+            </ul>
+
+            <div class="user-actions">
+                <i class="fas fa-search"></i>
+                <i class="fas fa-bell"></i>
+
+                <div class="user-profile-container">
+                    <div class="user-avatar" id="avatarTrigger">JD</div>
+
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="dropdown-header">
+                            <strong>JD</strong>
+                            <span>Sales Department</span>
+                        </div>
+                        <hr>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-user-circle"></i> My Profile
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                        <hr>
+                        <a href="#" onclick="logout(); return false;" class="dropdown-item logout-item">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="breadcrumb-wrapper">
+        <div class="breadcrumb-content">
+            Sale Task
+        </div>
+    </div>
+
+    <div class="container1">
+        <header class="page-header-list">
+            <h1>Sale Task</h1>
+            <div class="header-btns">
+                <button class="btn btn-primary" onclick="window.location.href='../S_create_order/index.html'">
+                    <i class="fas fa-plus"></i> Create New Order
+                </button>
+                <button class="btn btn-outline">
+                    <i class="fas fa-download"></i> Export
+                </button>
+            </div>
+        </header>
+
+        <!-- Status summary cards -->
+        <section class="task-summary" id="taskSummary">
+            <div class="summary-card" data-status="Draft">
+                <div class="summary-icon draft"><i class="fas fa-file-alt"></i></div>
+                <div class="summary-info">
+                    <span class="summary-count" id="countDraft">0</span>
+                    <span class="summary-label">Draft</span>
+                </div>
+            </div>
+            <div class="summary-card" data-status="Awaiting Approval">
+                <div class="summary-icon awaiting"><i class="fas fa-clock"></i></div>
+                <div class="summary-info">
+                    <span class="summary-count" id="countAwaiting">0</span>
+                    <span class="summary-label">Awaiting</span>
+                </div>
+            </div>
+            <div class="summary-card" data-status="Confirmed">
+                <div class="summary-icon confirmed"><i class="fas fa-check-circle"></i></div>
+                <div class="summary-info">
+                    <span class="summary-count" id="countConfirmed">0</span>
+                    <span class="summary-label">Confirmed</span>
+                </div>
+            </div>
+            <div class="summary-card" data-status="Prepared">
+                <div class="summary-icon prepared"><i class="fas fa-box"></i></div>
+                <div class="summary-info">
+                    <span class="summary-count" id="countPrepared">0</span>
+                    <span class="summary-label">Prepared</span>
+                </div>
+            </div>
+            <div class="summary-card" data-status="Rejected">
+                <div class="summary-icon rejected"><i class="fas fa-times-circle"></i></div>
+                <div class="summary-info">
+                    <span class="summary-count" id="countRejected">0</span>
+                    <span class="summary-label">Rejected</span>
+                </div>
+            </div>
+            <div class="summary-card" data-status="Overdue">
+                <div class="summary-icon overdue"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="summary-info">
+                    <span class="summary-count" id="countOverdue">0</span>
+                    <span class="summary-label">Overdue</span>
+                </div>
+            </div>
+        </section>
+
+        <main class="order-table-container">
+            <div class="filter-section">
+                <div class="search-main">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="mainSearch" placeholder="Search by Order ID, Customer...">
+                </div>
+
+                <div class="filter-group">
+                    <label>Status:</label>
+                    <select id="statusFilter">
+                        <option value="All">All</option>
+                        <option value="Draft">Draft</option>
+                        <option value="Awaiting Approval">Awaiting Approval</option>
+                        <option value="Rejected">Rejected</option>
+                        <option value="Confirmed">Confirmed</option>
+                        <option value="Prepared">Prepared</option>
+                        <option value="Overdue">Overdue</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Priority:</label>
+                    <select id="priorityFilter">
+                        <option value="All">All</option>
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                        <option value="None">None</option>
+                    </select>
+                </div>
+
+                <button class="btn-icon-filter"><i class="fas fa-sliders-h"></i></button>
+            </div>
+
+            <table class="order-table">
+                <thead>
+                    <tr>
+                        <th>ORDER ID</th>
+                        <th>CUSTOMER</th>
+                        <th style="text-align: center;">PRIORITY</th>
+                        <th style="text-align: center;">STATUS</th>
+                        <th style="text-align: center;">DEADLINE</th>
+                        <th style="text-align: center;">ITEM</th>
+                        <th style="text-align: center;">CREATED DATE</th>
+                        <th style="text-align: center;">DETAIL</th>
+                    </tr>
+                </thead>
+                <tbody id="orderTableBody"></tbody>
+            </table>
+        </main>
+    </div>
+
+    <footer class="main-footer">
+        <p>&copy; 2025 Order Management System. All rights reserved.</p>
+    </footer>
+
+    <script src="../api.js"></script>
+    <script src="../auth.js"></script>
+    <script>
+        if (requireAuth(['ADMIN', 'SALES_STAFF'])) {
+            console.log('Access granted to Sale Task');
+        }
+    </script>
+    <script src="S_dash.js"></script>
+</body>
+
+</html>
+

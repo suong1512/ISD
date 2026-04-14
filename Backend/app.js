@@ -16,7 +16,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.use('/app', express.static(path.join(__dirname, '..', 'Fontend')));
+app.use('/app', express.static(path.join(__dirname, '..', 'Frontend')));
 
 app.get('/', (req, res) => {
   res.redirect('/app/gate/gate.html');

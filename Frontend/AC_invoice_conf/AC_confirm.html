@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Confirmation - Order Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../global.css">
+    <link rel="stylesheet" href="../conf_shared/confirm_shared.css">
+    <link rel="stylesheet" href="AC_conf.css">
+</head>
+
+<body>
+
+    <nav class="main-header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="../img/logo.jpeg" alt="Logo" class="logo-img">
+                <span>Order Management</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="../AC_tasks/AC_dash.html">Accountant Task</a></li>
+                <li class="active">Confirm Invoice</li>
+            </ul>
+            <div class="user-actions">
+                <i class="fas fa-search"></i>
+                <i class="fas fa-bell"></i>
+
+                <div class="user-profile-container">
+                    <div class="user-avatar" id="avatarTrigger">AC</div>
+
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="dropdown-header">
+                            <strong id="dropdownName">Accountant</strong>
+                            <span id="dropdownDept">Accounting Department</span>
+                        </div>
+                        <hr>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-user-circle"></i> My Profile
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                        <hr>
+                        <a href="#" onclick="logout(); return false;" class="dropdown-item logout-item">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="breadcrumb-wrapper">
+        <div class="breadcrumb-content">
+            <a href="../AC_tasks/AC_dash.html" class="back-link">Accountant Task</a>
+            > Confirm Invoice
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <div>
+                <h1>Invoice Confirmation</h1>
+                <p class="subtitle">Review completed orders and issue final invoices.</p>
+            </div>
+            <span class="stats-badge" id="pendingCount">0 Pending</span>
+        </div>
+
+        <div class="section-header">
+            <div class="section-header-left">
+                <h2><i class="fas fa-file-invoice"></i> Orders Waiting for Invoice</h2>
+            </div>
+            <div class="section-header-right">
+                <button class="btn-filter"><i class="fas fa-sliders-h"></i> Filter</button>
+            </div>
+        </div>
+
+        <div class="order-grid" id="orderGrid"></div>
+    </div>
+
+    <script src="../api.js"></script>
+    <script src="../auth.js"></script>
+    <script>
+        if (requireAuth(['ADMIN', 'ACCOUNTANT'])) {
+            console.log('Access granted to Accountant Confirm');
+        }
+    </script>
+    <script src="../conf_shared/confirm_shared.js"></script>
+    <script src="AC_conf.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Setup User Dropdown
+            const avatar = document.getElementById('avatarTrigger');
+            const dropdown = document.getElementById('userDropdown');
+            if(avatar && dropdown) {
+                avatar.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    dropdown.classList.toggle('active');
+                });
+                document.addEventListener('click', function (e) {
+                    if (!avatar.contains(e.target) && !dropdown.contains(e.target)) {
+                        dropdown.classList.remove('active');
+                    }
+                });
+            }
+
+            // Load user data
+            const initials = localStorage.getItem('userInitials');
+            const fullName = localStorage.getItem('currentUser');
+            const avatarElement = document.getElementById('avatarTrigger');
+            const dropdownName = document.querySelector('.dropdown-header strong');
+
+            if (initials && avatarElement) avatarElement.innerText = initials;
+            if (fullName && dropdownName) dropdownName.innerText = fullName;
+        });
+    </script>
+</body>
+
+</html>
+

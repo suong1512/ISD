@@ -810,6 +810,158 @@ async function submitDraftOrder(orderId) {
   }
 }
 
+async function prepareOrder(orderId, confirmedBy) {
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const [orderRows] = await connection.query(
+      `SELECT id, status FROM orders WHERE id = ?`,
+      [orderId]
+    );
+
+    if (orderRows.length === 0) {
+      throw new Error('Order not found');
+    }
+
+    if (orderRows[0].status !== 'CONFIRMED') {
+      throw new Error('Only orders in CONFIRMED status can be marked as Prepared');
+    }
+
+    await connection.query(
+      `UPDATE orders
+       SET status = 'PREPARING',
+           prepare_completed_at = NOW(),
+           updated_at = NOW()
+       WHERE id = ?`,
+      [orderId]
+    );
+
+    await connection.commit();
+    return await getOrderById(orderId);
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
+async function qcOrder(orderId, confirmedBy) {
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const [orderRows] = await connection.query(
+      `SELECT id, status FROM orders WHERE id = ?`,
+      [orderId]
+    );
+
+    if (orderRows.length === 0) {
+      throw new Error('Order not found');
+    }
+
+    if (orderRows[0].status !== 'PREPARING') {
+      throw new Error('Only orders in PREPARING status can be QC checked');
+    }
+
+    await connection.query(
+      `UPDATE orders
+       SET status = 'SHIPPING',
+           qc_completed_at = NOW(),
+           updated_at = NOW()
+       WHERE id = ?`,
+      [orderId]
+    );
+
+    await connection.commit();
+    return await getOrderById(orderId);
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
+async function shipOrder(orderId, confirmedBy) {
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const [orderRows] = await connection.query(
+      `SELECT id, status FROM orders WHERE id = ?`,
+      [orderId]
+    );
+
+    if (orderRows.length === 0) {
+      throw new Error('Order not found');
+    }
+
+    if (orderRows[0].status !== 'SHIPPING') {
+      throw new Error('Only orders in SHIPPING status can be shipped');
+    }
+
+    await connection.query(
+      `UPDATE orders
+       SET status = 'AWAITING_INVOICE',
+           shipping_completed_at = NOW(),
+           updated_at = NOW()
+       WHERE id = ?`,
+      [orderId]
+    );
+
+    await connection.commit();
+    return await getOrderById(orderId);
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
+async function completeOrder(orderId, confirmedBy) {
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const [orderRows] = await connection.query(
+      `SELECT id, status FROM orders WHERE id = ?`,
+      [orderId]
+    );
+
+    if (orderRows.length === 0) {
+      throw new Error('Order not found');
+    }
+
+    if (orderRows[0].status !== 'AWAITING_INVOICE') {
+      throw new Error('Only orders in AWAITING_INVOICE status can be completed');
+    }
+
+    await connection.query(
+      `UPDATE orders
+       SET status = 'COMPLETED',
+           delivered_at = NOW(),
+           updated_at = NOW()
+       WHERE id = ?`,
+      [orderId]
+    );
+
+    await connection.commit();
+    return await getOrderById(orderId);
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
 module.exports = {
   getAllOrders,
   getOrderById,
@@ -818,5 +970,9 @@ module.exports = {
   confirmOrder,
   rejectOrder,
   updateDraftOrder,
-  submitDraftOrder
+  submitDraftOrder,
+  prepareOrder,
+  qcOrder,
+  shipOrder,
+  completeOrder
 };

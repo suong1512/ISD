@@ -10,6 +10,10 @@ router.post('/submit', orderController.submitOrder);
 router.patch('/:id/submit', orderController.submitDraftOrder);
 router.patch('/:id/confirm', orderController.confirmOrder);
 router.patch('/:id/reject', orderController.rejectOrder);
+router.patch('/:id/prepare', orderController.prepareOrder);
+router.patch('/:id/qc', orderController.qcOrder);
+router.patch('/:id/ship', orderController.shipOrder);
+router.patch('/:id/complete', orderController.completeOrder);
 router.patch('/:id', orderController.updateDraftOrder);
 router.post(
   '/:id/attachments',

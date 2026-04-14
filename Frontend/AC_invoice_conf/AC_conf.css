@@ -1,0 +1,14 @@
+/* AC_conf.css - Invoice confirmation styles */
+.stats-badge {
+    background: #e6f7ff;
+    color: #096dd9;
+}
+
+.btn-confirm {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-confirm:hover {
+    background-color: #218838;
+}

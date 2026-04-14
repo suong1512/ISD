@@ -1,0 +1,8 @@
+/* A_conf.css - Admin Specific Overrides */
+
+/* Any admin-only tweaks can go here */
+.badge-urgent {
+    width: auto;
+    padding: 4px 12px;
+    border-radius: 20px;
+}

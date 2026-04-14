@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tech Task - Order Management</title>
+    <meta name="description" content="Technical task overview - manage orders through the tech workflow pipeline.">
+    <link rel="stylesheet" href="../global.css">
+    <link rel="stylesheet" href="../list/O_list.css">
+    <link rel="stylesheet" href="T_dash.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <nav class="main-header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="../img/logo.jpeg" alt="Logo" class="logo-img">
+                <span>Order Management</span>
+            </div>
+
+            <ul class="nav-links">
+                <li class="active">Tech Task</li>
+                <li><a href="../T_checking/checking.html">Checking</a></li>
+                <li><a href="../T_shipping/shipping.html">Shipping</a></li>
+            </ul>
+
+            <div class="user-actions">
+                <i class="fas fa-search"></i>
+                <i class="fas fa-bell"></i>
+
+                <div class="user-profile-container">
+                    <div class="user-avatar" id="avatarTrigger">JD</div>
+
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="dropdown-header">
+                            <strong>JD</strong>
+                            <span>Technical Department</span>
+                        </div>
+                        <hr>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-user-circle"></i> My Profile
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                        <hr>
+                        <a href="#" onclick="logout(); return false;" class="dropdown-item logout-item">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="breadcrumb-wrapper">
+        <div class="breadcrumb-content">
+            Tech Task
+        </div>
+    </div>
+
+    <div class="container1">
+        <header class="page-header-list">
+            <h1>Tech Task</h1>
+            <div class="header-btns">
+                <button class="btn btn-outline">
+                    <i class="fas fa-download"></i> Export
+                </button>
+            </div>
+        </header>
+
+        <!-- Status summary cards -->
+        <section class="task-summary" id="taskSummary">
+            <div class="summary-card" data-status="Preparing">
+                <div class="summary-icon prepared"><i class="fas fa-box"></i></div>
+                <div class="summary-info">
+                    <span class="summary-count" id="countPreparing">0</span>
+                    <span class="summary-label">Preparing</span>
+                </div>
+            </div>
+            <div class="summary-card" data-status="QC Checked">
+                <div class="summary-icon awaiting"><i class="fas fa-search"></i></div>
+                <div class="summary-info">
+                    <span class="summary-count" id="countQc">0</span>
+                    <span class="summary-label">QC</span>
+                </div>
+            </div>
+            <div class="summary-card" data-status="Shipping">
+                <div class="summary-icon draft"><i class="fas fa-truck"></i></div>
+                <div class="summary-info">
+                    <span class="summary-count" id="countShipping">0</span>
+                    <span class="summary-label">Shipping</span>
+                </div>
+            </div>
+            <div class="summary-card" data-status="Overdue">
+                <div class="summary-icon overdue"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="summary-info">
+                    <span class="summary-count" id="countOverdue">0</span>
+                    <span class="summary-label">Overdue</span>
+                </div>
+            </div>
+        </section>
+
+        <main class="order-table-container">
+            <div class="filter-section">
+                <div class="search-main">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="mainSearch" placeholder="Search by Order ID, Customer...">
+                </div>
+
+                <div class="filter-group">
+                    <label>Status:</label>
+                    <select id="statusFilter">
+                        <option value="All">All</option>
+                        <option value="Preparing">Preparing</option>
+                        <option value="QC Checked">QC</option>
+                        <option value="Shipping">Shipping</option>
+                        <option value="Overdue">Overdue</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Priority:</label>
+                    <select id="priorityFilter">
+                        <option value="All">All</option>
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                        <option value="None">None</option>
+                    </select>
+                </div>
+
+                <button class="btn-icon-filter"><i class="fas fa-sliders-h"></i></button>
+            </div>
+
+            <table class="order-table">
+                <thead>
+                    <tr>
+                        <th>ORDER ID</th>
+                        <th>CUSTOMER</th>
+                        <th style="text-align: center;">PRIORITY</th>
+                        <th style="text-align: center;">STATUS</th>
+                        <th style="text-align: center;">DEADLINE</th>
+                        <th style="text-align: center;">ITEM</th>
+                        <th style="text-align: center;">CREATED DATE</th>
+                        <th style="text-align: center;">DETAIL</th>
+                    </tr>
+                </thead>
+                <tbody id="orderTableBody"></tbody>
+            </table>
+        </main>
+    </div>
+
+    <footer class="main-footer">
+        <p>&copy; 2025 Order Management System. All rights reserved.</p>
+    </footer>
+
+    <script src="../api.js"></script>
+    <script src="../auth.js"></script>
+    <script>
+        if (requireAuth(['ADMIN', 'TECH_STAFF'])) {
+            console.log('Access granted to Tech Task');
+        }
+    </script>
+    <script src="T_dash.js"></script>
+</body>
+
+</html>
+

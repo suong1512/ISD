@@ -1,0 +1,433 @@
+/* ============================================
+   SHARED CONFIRMATION PAGE STYLES
+   Reused by: Preparing, QC Checking, Shipping
+   ============================================ */
+
+/* Container */
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 30px auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Page Header (Title + Stats) */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 25px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+}
+
+.page-header h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -0.5px;
+}
+
+.page-header .subtitle {
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-size: 15px;
+}
+
+/* Stats Badge (Top Right) */
+.stats-badge {
+    background: #e6f7ff;
+    color: #1890ff;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.stats-badge i {
+    font-size: 14px;
+}
+
+/* Section Header (title + filter/sort) */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+/* Filter / Sort Buttons */
+.btn-filter,
+.btn-sort {
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    background: white;
+    color: var(--text-main);
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.btn-filter:hover,
+.btn-sort:hover {
+    background: var(--neutral-bg);
+    border-color: #bbb;
+}
+
+/* ===== Order Grid ===== */
+.order-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 20px;
+}
+
+/* ===== Order Card ===== */
+.order-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.order-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* Card Header */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 6px;
+}
+
+.order-label {
+    font-size: 11px;
+    color: #999;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.order-number {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+.btn-detail {
+    padding: 5px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    background: white;
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn-detail:hover {
+    background: var(--neutral-bg);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* Customer Name & Deadline */
+.customer-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 8px 0 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.deadline-box {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.deadline-box i {
+    color: #e67e22; /* Orange for deadline */
+}
+
+.deadline-box.overdue {
+    color: #cf1322;
+    font-weight: bold;
+}
+
+.deadline-box.overdue i {
+    color: #cf1322;
+}
+
+.customer-name i {
+    color: #aaa;
+    font-size: 14px;
+}
+
+/* Attachment Box */
+.attachment-box {
+    background: #f8f9fa;
+    padding: 12px 14px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    border: 1px solid #eee;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--text-main);
+    font-weight: 500;
+}
+
+.file-info i.file-icon {
+    color: var(--secondary-color);
+    font-size: 18px;
+}
+
+.file-info .file-name {
+    color: var(--text-main);
+    font-weight: 500;
+}
+
+.btn-view-file {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px;
+    transition: color 0.2s;
+}
+
+.btn-view-file:hover {
+    color: var(--primary-color);
+}
+
+/* Confirm Button (full width) */
+.btn-confirm-action {
+    width: 100%;
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    border: none;
+    background: var(--primary-color);
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.25s;
+}
+
+.btn-confirm-action:hover {
+    background: var(--primary-hover);
+    box-shadow: 0 4px 12px rgba(45, 122, 93, 0.3);
+}
+
+.btn-confirm-action:active {
+    transform: scale(0.98);
+}
+
+.btn-confirm-action i {
+    font-size: 16px;
+}
+
+/* Footer */
+.main-footer {
+    width: 100%;
+    padding: 25px 0;
+    background: white;
+    border-top: 1px solid var(--border-color);
+    margin-top: auto;
+    display: flex;
+    justify-content: center;
+}
+
+.footer-content {
+    width: 90%;
+    max-width: 1200px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.footer-links {
+    display: flex;
+    gap: 24px;
+}
+
+.footer-links a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 13px;
+    transition: color 0.2s;
+}
+
+.footer-links a:hover {
+    color: var(--primary-color);
+}
+
+/* Search bar in navbar */
+.search-bar {
+    display: flex;
+    align-items: center;
+    background: var(--neutral-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 6px 12px;
+    gap: 8px;
+    min-width: 200px;
+}
+
+.search-bar i {
+    color: #aaa;
+    font-size: 14px;
+}
+
+.search-bar input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 13px;
+    color: var(--text-main);
+    width: 100%;
+}
+
+.search-bar input::placeholder {
+    color: #aaa;
+}
+
+/* Role Badge */
+.role-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-muted);
+    background: var(--neutral-bg);
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    cursor: default;
+}
+
+/* Empty & Error States */
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #888;
+    padding: 80px 20px;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 12px;
+    color: #ccc;
+}
+
+.empty-state p {
+    font-size: 15px;
+}
+
+/* Card Actions (Support for multiple buttons) */
+.card-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: auto;
+}
+
+.card-actions .btn-confirm-action {
+    flex: 1.2; /* Confirm button slightly wider */
+}
+
+.btn-reject-action {
+    flex: 1;
+    padding: 12px 15px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    background: white;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.btn-reject-action:hover {
+    background: #fff1f0;
+    border-color: #ffa39e;
+    color: #cf1322;
+}
+
+.btn-reject-action i {
+    font-size: 15px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .order-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .card-actions {
+        flex-direction: column;
+    }
+
+    .footer-content {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+
+    .header-content {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+}

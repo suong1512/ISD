@@ -1,0 +1,112 @@
+/* S_dash.css — Sale Task specific styles */
+
+/* ===== Task Summary Cards ===== */
+.task-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.summary-card {
+    background: white;
+    padding: 18px 20px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.summary-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.summary-card.active {
+    border-color: var(--primary-color);
+    background-color: #f0f9f6;
+    box-shadow: 0 4px 15px rgba(45, 122, 93, 0.12);
+}
+
+.summary-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.summary-icon.draft {
+    background: #f5f5f5;
+    color: #757575;
+}
+
+.summary-icon.awaiting {
+    background: #fffbe6;
+    color: #d48806;
+}
+
+.summary-icon.confirmed {
+    background: #f6ffed;
+    color: #389e0d;
+}
+
+.summary-icon.prepared {
+    background: #e6f7ff;
+    color: #096dd9;
+}
+
+.summary-icon.rejected {
+    background: #fff1f0;
+    color: #cf1322;
+}
+
+.summary-icon.overdue {
+    background: #fff2e8;
+    color: #d4380d;
+}
+
+.summary-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.summary-count {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-main);
+    line-height: 1;
+}
+
+.summary-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .task-summary {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .task-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .task-summary {
+        grid-template-columns: 1fr;
+    }
+}
