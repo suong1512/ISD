@@ -155,3 +155,19 @@ body {
     60% { transform: translateX(-4px); }
     80% { transform: translateX(4px); }
 }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 480px) {
+    .login-container {
+        padding: 15px;
+    }
+    .login-box {
+        padding: 25px 20px;
+    }
+    .login-header h1 {
+        font-size: 1.5rem;
+    }
+    .login-header i {
+        font-size: 2.5rem;
+    }
+}

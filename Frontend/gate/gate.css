@@ -96,3 +96,20 @@ body {
 .role-btn:active {
     transform: scale(0.98);
 }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 480px) {
+    .gateway-container {
+        padding: 15px;
+    }
+    .gateway-box {
+        padding: 25px 20px;
+    }
+    .gateway-header h1 {
+        font-size: 1.4rem;
+    }
+    .role-btn {
+        padding: 10px 15px;
+        font-size: 0.95rem;
+    }
+}

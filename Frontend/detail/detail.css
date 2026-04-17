@@ -285,13 +285,10 @@
     gap: 20px;
 }
 
-/* Style chung cho Card */
-.card {
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: var(--shadow-card);
+/* Style chung cho Card - padding override only */
+.detail-container .card {
     padding: 20px;
-    border: 1px solid #f1f1f1;
+    border-color: #f1f1f1;
 }
 
 .card h2 {
@@ -777,14 +774,69 @@ hr {
     border-color: #ffcdd2;
 }
 
-/* --- CSS CỰC KỲ QUAN TRỌNG: FOOTER (Copy lại để đẩy xuống đáy) --- */
-.main-footer {
-    width: 100%;
-    padding: 25px 0;
-    text-align: center;
-    color: #888;
-    font-size: 13px;
-    margin-top: 50px;
-    background: white;
-    border-top: 1px solid var(--border-color);
+/* --- RESPONSIVE --- */
+@media (max-width: 992px) {
+    .main-content-layout {
+        flex-direction: column;
+    }
+    .order-grid {
+        grid-template-columns: 1fr;
+    }
+    .order-grid .attachments-info {
+        grid-column: 1;
+        grid-row: auto;
+    }
+    .order-grid #productListContainer {
+        grid-column: 1;
+    }
+    .order-grid .address-card {
+        grid-column: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .detail-container {
+        width: 95%;
+        margin: 15px auto;
+    }
+    .order-info-block {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+        padding: 15px !important;
+    }
+    .order-deadline {
+        align-items: flex-start;
+        text-align: left;
+    }
+    .time-boxes {
+        justify-content: flex-start;
+    }
+    .header-info h1 {
+        font-size: 20px;
+    }
+    .step {
+        width: 60px;
+    }
+    .step-label {
+        font-size: 10px;
+    }
+    .step-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+    }
+    .progress-lines {
+        top: 32px;
+    }
+    .action-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .time-box {
+        font-size: 18px;
+        padding: 4px 8px;
+    }
 }

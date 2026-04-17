@@ -20,7 +20,9 @@ async function initConfirmationPage(config) {
         confirmEndpoint,
         confirmButtonText,
         confirmSuccessMsg,
-        pageTitle
+        pageTitle,
+        detailUrl,
+        detailBtnText
     } = config;
 
     const orderGrid = document.getElementById('orderGrid');
@@ -90,14 +92,22 @@ async function initConfirmationPage(config) {
             const deadlineText = relevantDeadline ? new Date(relevantDeadline).toISOString().split('T')[0] : 'No deadline set';
             const isActuallyOverdue = isDelayedOnBackend || (relevantDeadline && new Date(relevantDeadline) < today);
 
+            const isInvoiceCreated = localStorage.getItem('invoice_created_' + order.id) === 'true';
+            const invoiceCreatedHtml = isInvoiceCreated ? `
+                <div class="deadline-box">
+                    <i class="fas fa-file-invoice-dollar" style="color: #2d7a5d;"></i> Invoice Created
+                </div>` : '';
+
+            const cardClickHtml = config.cardClickUrl ? `onclick="goToSpecificPage('${order.id}', '${config.cardClickUrl}')" style="cursor: pointer;"` : '';
+
             return `
-            <div class="order-card" id="order-${order.id}">
+            <div class="order-card" id="order-${order.id}" ${cardClickHtml}>
                 <div class="card-header">
                     <div>
                         <span class="order-label">ORDER ID</span>
                         <div class="order-number">${order.order_code || '#' + order.id}</div>
                     </div>
-                    <button class="btn-detail" onclick="goToDetail('${order.id}')">Order Detail</button>
+                    <button class="btn-detail" onclick="event.stopPropagation(); goToSpecificPage('${order.id}', '${config.detailUrl || '../detail/detail.html'}')">${config.detailBtnText || 'Order Detail'}</button>
                 </div>
 
                 <div class="customer-name">
@@ -107,6 +117,7 @@ async function initConfirmationPage(config) {
                 <div class="deadline-box ${isActuallyOverdue ? 'overdue' : ''}">
                     <i class="fas fa-calendar-alt"></i> Deadline: ${deadlineText} ${isActuallyOverdue ? '(Overdue)' : ''}
                 </div>
+                ${invoiceCreatedHtml}
 
                 <div class="attachment-box" id="attach-${order.id}">
                     <div class="file-info">
@@ -115,7 +126,7 @@ async function initConfirmationPage(config) {
                     </div>
                 </div>
 
-                <button class="btn-confirm-action" onclick="confirmAction('${order.id}', '${order.order_code || '#' + order.id}')">
+                <button class="btn-confirm-action" onclick="event.stopPropagation(); confirmAction('${order.id}', '${order.order_code || '#' + order.id}')">
                     <i class="fas fa-check-circle"></i> ${confirmButtonText}
                 </button>
             </div>
@@ -140,7 +151,7 @@ async function initConfirmationPage(config) {
                                     <i class="fas fa-file-alt file-icon"></i>
                                     <span class="file-name">${file.file_name || 'Document'}</span>
                                 </div>
-                                <a href="/${filePath}" target="_blank" class="btn-view-file" title="View file">
+                                <a href="/${filePath}" target="_blank" class="btn-view-file" title="View file" onclick="event.stopPropagation();">
                                     <i class="fas fa-eye"></i>
                                 </a>`;
                         } else {
@@ -178,8 +189,13 @@ async function initConfirmationPage(config) {
             alert("Error: " + error.message);
         }
     };
+    window.goToSpecificPage = function(orderId, targetUrl) {
+        sessionStorage.setItem('currentOrderId', orderId);
+        window.location.href = targetUrl;
+    };
 }
 
+// Preserve backwards compatibility
 function goToDetail(orderId) {
     sessionStorage.setItem('currentOrderId', orderId);
     window.location.href = "../detail/detail.html";

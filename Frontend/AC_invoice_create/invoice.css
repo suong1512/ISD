@@ -1,0 +1,248 @@
+/* Create Invoice Page Specific Styles */
+
+:root {
+    --invoice-bg: #f8fafc;
+    --input-bg: #fcfdfe;
+    --accent-green: #2d7a5d;
+    --accent-green-light: #f0f9f6;
+}
+
+body {
+    background-color: var(--invoice-bg);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 40px auto;
+}
+
+.page-header {
+    margin-bottom: 30px;
+}
+
+.header-title {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.header-title h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.status-badge {
+    background-color: var(--accent-green-light);
+    color: var(--accent-green);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.invoice-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 30px;
+    align-items: start;
+}
+
+/* Use global .card with local padding override */
+.invoice-grid .card {
+    padding: 30px;
+}
+
+.panel-header {
+    margin-bottom: 25px;
+}
+
+.panel-header h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 8px;
+}
+
+.header-with-icon {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.icon-blue {
+    color: var(--accent-green);
+    background: var(--accent-green-light);
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 18px;
+}
+
+.subtitle {
+    font-size: 13px;
+    color: #64748b;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 8px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background-color: var(--input-bg);
+    color: #1e293b;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--accent-green);
+    box-shadow: 0 0 0 3px rgba(45, 122, 93, 0.1);
+}
+
+/* Table Styles */
+.invoice-table-wrapper {
+    margin-top: 20px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.invoice-table th {
+    padding: 12px 10px;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.invoice-table th:first-child {
+    text-align: left;
+}
+
+.invoice-table td {
+    padding: 15px 10px;
+    font-size: 14px;
+    color: #334155;
+    border-bottom: none;
+}
+
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+
+.invoice-table tbody tr:last-child td {
+    padding-bottom: 30px;
+}
+
+/* Totals Styles */
+.totals-section {
+    background-color: var(--input-bg);
+    border-radius: 12px;
+    padding: 20px 25px;
+    margin: 25px 0;
+}
+
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: #64748b;
+}
+
+.total-row:last-child {
+    margin-bottom: 0;
+}
+
+.main-total {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e2e8f0;
+    color: #1e293b;
+    font-size: 18px;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+/* Buttons: use global .btn, only override sizing locally */
+.action-buttons .btn {
+    padding: 14px 20px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 992px) {
+    .invoice-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        width: 95%;
+        margin: 20px auto;
+    }
+    .header-title {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .header-title h1 {
+        font-size: 22px;
+    }
+    .invoice-grid .card {
+        padding: 20px;
+    }
+    .panel-header h2 {
+        font-size: 16px;
+    }
+    .action-buttons {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .invoice-table th,
+    .invoice-table td {
+        padding: 10px 6px;
+        font-size: 12px;
+    }
+    .totals-section {
+        padding: 15px;
+    }
+    .main-total {
+        font-size: 16px;
+    }
+}

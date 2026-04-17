@@ -134,12 +134,12 @@
 }
 
 .btn-detail {
-    padding: 5px 14px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border-color);
-    background: white;
-    color: var(--text-muted);
-    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #64748b;
+    font-weight: 600;
     font-size: 13px;
     cursor: pointer;
     text-decoration: none;
@@ -147,9 +147,9 @@
 }
 
 .btn-detail:hover {
-    background: var(--neutral-bg);
-    border-color: var(--primary-color);
-    color: var(--primary-color);
+    background: #e2e8f0;
+    border-color: #cbd5e1;
+    color: #475569;
 }
 
 /* Customer Name & Deadline */
@@ -157,23 +157,25 @@
     font-size: 15px;
     font-weight: 600;
     color: var(--text-main);
-    margin: 8px 0 4px 0;
+    margin: 12px 0 6px 0;
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
 .deadline-box {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--text-muted);
-    margin-bottom: 16px;
+    margin-bottom: 6px;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
 .deadline-box i {
     color: #e67e22; /* Orange for deadline */
+    width: 18px;
+    text-align: center;
 }
 
 .deadline-box.overdue {
@@ -188,18 +190,21 @@
 .customer-name i {
     color: #aaa;
     font-size: 14px;
+    width: 18px;
+    text-align: center;
 }
 
 /* Attachment Box */
 .attachment-box {
-    background: #f8f9fa;
+    background: #f8fafc;
     padding: 12px 14px;
-    border-radius: 8px;
+    border-radius: 6px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-top: 14px;
     margin-bottom: 16px;
-    border: 1px solid #eee;
+    border: 1px solid #e2e8f0;
 }
 
 .file-info {
@@ -405,29 +410,56 @@
 }
 
 /* Responsive */
+@media (max-width: 992px) {
+    .order-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 @media (max-width: 768px) {
+    .container {
+        width: 95%;
+        margin: 20px auto;
+    }
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
     .order-grid {
         grid-template-columns: 1fr;
     }
-
     .section-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 12px;
     }
-
     .card-actions {
         flex-direction: column;
     }
-
     .footer-content {
         flex-direction: column;
         gap: 10px;
         text-align: center;
     }
-
     .header-content {
         flex-wrap: wrap;
         gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .order-card {
+        padding: 16px;
+    }
+    .order-number {
+        font-size: 17px;
+    }
+    .btn-confirm-action {
+        padding: 14px;
+        font-size: 13px;
+    }
+    .page-header h1 {
+        font-size: 1.5rem;
     }
 }

@@ -1,4 +1,12 @@
 document.addEventListener('DOMContentLoaded', async function () {
+    // Global Quick Actions Mappings
+    const invoiceBtn = document.querySelector('.invoice-btn');
+    if (invoiceBtn) {
+        invoiceBtn.addEventListener('click', () => {
+            window.location.href = '../AC_invoice_create/invoice.html';
+        });
+    }
+
     // 1. Lấy ID từ sessionStorage
     const orderId = sessionStorage.getItem('currentOrderId');
 
@@ -119,7 +127,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const initials = localStorage.getItem('userInitials');
     const fullName = localStorage.getItem('currentUser');
     const authUser = JSON.parse(localStorage.getItem('authUser')) || {};
-    
+
     const avatarElement = document.getElementById('avatarTrigger');
     const dropdownName = document.querySelector('.dropdown-header strong');
 
@@ -140,7 +148,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 <li><a href="../T_shipping/shipping.html" style="text-decoration: none; color: inherit;">Shipping</a></li>
             `;
         }
-        
+
         const breadcrumbContent = document.querySelector('.breadcrumb-content');
         if (breadcrumbContent) {
             breadcrumbContent.innerHTML = `
@@ -148,7 +156,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                  > Order Details
             `;
         }
-        
+
         const deptSpan = document.querySelector('.dropdown-header span');
         if (deptSpan) deptSpan.innerText = 'Technical Department';
 
@@ -168,7 +176,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                  > Order Details
             `;
         }
-        
+
         const deptSpan = document.querySelector('.dropdown-header span');
         if (deptSpan) deptSpan.innerText = 'Accounting Department';
 
@@ -190,7 +198,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                  > Order Details
             `;
         }
-        
+
         const deptSpan = document.querySelector('.dropdown-header span');
         if (deptSpan) deptSpan.innerText = 'Administrator';
     } else {
@@ -203,7 +211,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 <li><a href="../S_preparing/preparing.html" style="text-decoration: none; color: inherit;">Preparing</a></li>
             `;
         }
-        
+
         const breadcrumbContent = document.querySelector('.breadcrumb-content');
         if (breadcrumbContent) {
             breadcrumbContent.innerHTML = `
@@ -347,7 +355,7 @@ function updateTimeline(status) {
 
     let htmlStepIndex = 0;
 
-    switch(status) {
+    switch (status) {
         case 'Draft':
             htmlStepIndex = 0; // Create active
             break;
