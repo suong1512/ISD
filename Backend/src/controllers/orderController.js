@@ -366,6 +366,29 @@ async function completeOrder(req, res) {
   }
 }
 
+async function createInvoice(req, res) {
+  try {
+    const { id } = req.params;
+    const { subtotal, tax, total, created_by } = req.body;
+
+    if (!created_by) {
+      return res.status(400).json({ message: 'created_by is required' });
+    }
+
+    const result = await orderService.createInvoice(id, { subtotal, tax, total, created_by });
+
+    return res.status(201).json({
+      message: 'Invoice created successfully',
+      data: result
+    });
+  } catch (error) {
+    console.error('Error in createInvoice:', error);
+    return res.status(500).json({
+      message: error.message || 'Internal server error'
+    });
+  }
+}
+
 module.exports = {
   getAllOrders,
   getOrderById,
@@ -378,5 +401,6 @@ module.exports = {
   prepareOrder,
   qcOrder,
   shipOrder,
-  completeOrder
+  completeOrder,
+  createInvoice
 };

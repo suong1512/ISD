@@ -7,60 +7,61 @@ document.addEventListener('DOMContentLoaded', async function () {
         return;
     }
 
-    // Map UI
-    document.getElementById('dropdownName').innerText = authUser.full_name;
-    document.getElementById('avatarTrigger').innerText = localStorage.getItem('userInitials') || 'AD';
-
-    // Dropdown toggle
-    const avatar = document.getElementById('avatarTrigger');
-    const dropdown = document.getElementById('userDropdown');
-    avatar.addEventListener('click', (e) => {
-        e.stopPropagation();
-        dropdown.classList.toggle('active');
-    });
-    document.addEventListener('click', (e) => {
-        if (!avatar.contains(e.target) && !dropdown.contains(e.target)) {
-            dropdown.classList.remove('active');
-        }
-    });
-
-    document.getElementById('refreshBtn').addEventListener('click', loadDashboardData);
-
-    // Initial load
-    await loadDashboardData();
-
-
-    // Avatar
-    const initials = localStorage.getItem('userInitials');
-    const fullName = localStorage.getItem('currentUser');
+    // 2. Map UI - User Info
+    const initials = localStorage.getItem('userInitials') || 'AD';
+    const fullName = authUser.full_name || localStorage.getItem('currentUser') || 'Admin';
+    
     const avatarElement = document.getElementById('avatarTrigger');
-    const dropdownName = document.querySelector('.dropdown-header strong');
+    const dropdownName = document.getElementById('dropdownName');
+    const dropdownStrong = document.querySelector('.dropdown-header strong');
 
-    if (initials && avatarElement) {
-        avatarElement.innerText = initials;
-    }
-    if (fullName && dropdownName) {
-        dropdownName.innerText = fullName;
-    }
-});
+    if (avatarElement) avatarElement.innerText = initials;
+    if (dropdownName) dropdownName.innerText = fullName;
+    if (dropdownStrong) dropdownStrong.innerText = fullName;
 
-
-// Dropdown Avatar
-document.addEventListener('DOMContentLoaded', function () {
-    const avatar = document.getElementById('avatarTrigger');
+    // 3. Dropdown toggle
     const dropdown = document.getElementById('userDropdown');
+    if (avatarElement && dropdown) {
+        avatarElement.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.classList.toggle('active');
+        });
 
-    avatar.addEventListener('click', function (e) {
-        e.stopPropagation();
-        dropdown.classList.toggle('active');
+        document.addEventListener('click', (e) => {
+            if (!avatarElement.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.remove('active');
+            }
+        });
+    }
+
+    // 4. Button Events
+    const refreshBtn = document.getElementById('refreshBtn');
+    if (refreshBtn) refreshBtn.addEventListener('click', loadDashboardData);
+
+    // 5. Setup KPI Card Interactions
+    document.querySelectorAll('.kpi-card').forEach(card => {
+        card.style.cursor = 'pointer';
+        card.addEventListener('click', function() {
+            const titleEl = this.querySelector('.kpi-title');
+            if (!titleEl) return;
+            const title = titleEl.innerText;
+            if (title === 'DELAYED ORDERS') {
+                window.location.href = '../list/O_list.html?filter=Overdue';
+            } else if (title === 'TOTAL ORDERS') {
+                window.location.href = '../list/O_list.html';
+            } else if (title === 'IN PROGRESS') {
+                window.location.href = '../list/O_list.html?filter=Processing';
+            }
+        });
     });
 
-    document.addEventListener('click', function (e) {
-        if (!avatar.contains(e.target) && !dropdown.contains(e.target)) {
-            dropdown.classList.remove('active');
-        }
-    });
+    // 6. Initial load & Auto-refresh
+    await loadDashboardData();
+    const refreshInterval = setInterval(loadDashboardData, 30000);
+    window.addEventListener('unload', () => clearInterval(refreshInterval));
 });
+
+
 
 
 
@@ -93,31 +94,7 @@ const DEPT_COLORS = {
     'accountant': '#1976d2' // Blue
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Initial load
-    loadDashboardData();
-    
-    // Auto-refresh every 30 seconds to make it "dynamic"
-    const refreshInterval = setInterval(loadDashboardData, 30000);
-    
-    // Cleanup on page unload (optional but good practice)
-    window.addEventListener('unload', () => clearInterval(refreshInterval));
-    
-    // Setup KPI Card Interactions
-    document.querySelectorAll('.kpi-card').forEach(card => {
-        card.style.cursor = 'pointer';
-        card.addEventListener('click', function() {
-            const title = this.querySelector('.kpi-title').innerText;
-            if (title === 'DELAYED ORDERS') {
-                window.location.href = '../list/O_list.html?filter=Overdue';
-            } else if (title === 'TOTAL ORDERS') {
-                window.location.href = '../list/O_list.html';
-            } else if (title === 'IN PROGRESS') {
-                window.location.href = '../list/O_list.html?filter=Processing';
-            }
-        });
-    });
-});
+
 
 async function loadDashboardData() {
     updateSyncTime();

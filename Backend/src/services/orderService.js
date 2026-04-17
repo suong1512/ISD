@@ -134,9 +134,15 @@ async function getOrderById(orderId) {
       o.created_at,
       o.updated_at,
       o.confirmed_at,
-      u.full_name AS created_by_name
+      u.full_name AS created_by_name,
+      inv.invoice_code,
+      inv.subtotal_amount,
+      inv.tax_amount,
+      inv.total_amount AS total_amount_inv,
+      inv.created_at AS created_at_inv
     FROM orders o
     JOIN users u ON o.created_by = u.id
+    LEFT JOIN invoices inv ON o.id = inv.order_id
     WHERE o.id = ?
   `, [orderId]);
 
@@ -210,6 +216,13 @@ async function getOrderById(orderId) {
     updated_at: order.updated_at,
     confirmed_at: order.confirmed_at,
     created_by_name: order.created_by_name,
+    invoice: order.invoice_code ? {
+      code: order.invoice_code,
+      subtotal: Number(order.subtotal_amount),
+      tax: Number(order.tax_amount),
+      total: Number(order.total_amount_inv || order.total_amount),
+      created_at: order.created_at_inv
+    } : null,
     delay_flags: {
       prepare: isPrepareDelayed,
       qc: isQcDelayed,
@@ -962,6 +975,44 @@ async function completeOrder(orderId, confirmedBy) {
   }
 }
 
+async function createInvoice(orderId, invoiceData) {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const { subtotal, tax, total, created_by } = invoiceData;
+    
+    // 1. Generate Invoice Code (INV-ORDCODE)
+    const [orderRows] = await connection.query('SELECT order_code FROM orders WHERE id = ?', [orderId]);
+    if (orderRows.length === 0) throw new Error('Order not found');
+    const invoiceCode = `INV-${orderRows[0].order_code}`;
+
+    // 2. Insert into invoices table
+    await connection.query(`
+      INSERT INTO invoices (order_id, invoice_code, subtotal_amount, tax_amount, total_amount, created_by)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `, [orderId, invoiceCode, subtotal, tax, total, created_by]);
+
+    // 3. Update order status to AWAITING_INVOICE
+    await connection.query(`
+      UPDATE orders SET status = 'AWAITING_INVOICE' WHERE id = ?
+    `, [orderId]);
+
+    await connection.commit();
+    return { invoiceCode };
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
+async function getInvoiceByOrderId(orderId) {
+  const [rows] = await pool.query('SELECT * FROM invoices WHERE order_id = ?', [orderId]);
+  return rows.length > 0 ? rows[0] : null;
+}
+
 module.exports = {
   getAllOrders,
   getOrderById,
@@ -974,5 +1025,7 @@ module.exports = {
   prepareOrder,
   qcOrder,
   shipOrder,
-  completeOrder
+  completeOrder,
+  createInvoice,
+  getInvoiceByOrderId
 };

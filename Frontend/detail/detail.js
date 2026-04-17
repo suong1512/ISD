@@ -1,5 +1,23 @@
 document.addEventListener('DOMContentLoaded', async function () {
+    // Avatar Dropdown Toggle
+    const avatar = document.getElementById('avatarTrigger');
+    const dropdown = document.getElementById('userDropdown');
+
+    if (avatar && dropdown) {
+        avatar.addEventListener('click', function (e) {
+            e.stopPropagation();
+            dropdown.classList.toggle('active');
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!avatar.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.remove('active');
+            }
+        });
+    }
+
     // Global Quick Actions Mappings
+
     const invoiceBtn = document.querySelector('.invoice-btn');
     if (invoiceBtn) {
         invoiceBtn.addEventListener('click', () => {

@@ -8,7 +8,7 @@ CREATE TABLE users (
   full_name VARCHAR(100) NOT NULL,
   email VARCHAR(100) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
-  role ENUM('SALES_STAFF', 'ADMIN', 'ACCOUNTANT') NOT NULL,
+  role ENUM('SALES_STAFF', 'ADMIN', 'ACCOUNTANT', 'TECH_STAFF') NOT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -122,3 +122,24 @@ CREATE INDEX idx_orders_created_by ON orders(created_by);
 CREATE INDEX idx_order_items_order_id ON order_items(order_id);
 CREATE INDEX idx_order_items_product_id ON order_items(product_id);
 CREATE INDEX idx_order_attachments_order_id ON order_attachments(order_id);
+
+-- 7. Invoices
+CREATE TABLE invoices (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  order_id INT NOT NULL UNIQUE,
+  invoice_code VARCHAR(30) NOT NULL UNIQUE,
+  subtotal_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  tax_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  total_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  created_by INT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_invoices_order
+    FOREIGN KEY (order_id) REFERENCES orders(id)
+    ON DELETE CASCADE,
+
+  CONSTRAINT fk_invoices_created_by
+    FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+CREATE INDEX idx_invoices_order_id ON invoices(order_id);

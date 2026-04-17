@@ -35,7 +35,24 @@ function formatDate(dateStr) {
 const TECH_STATUSES = ['PREPARING', 'QC', 'SHIPPING'];
 
 document.addEventListener('DOMContentLoaded', async function () {
+    const avatar = document.getElementById('avatarTrigger');
+    const dropdown = document.getElementById('userDropdown');
+
+    if (avatar && dropdown) {
+        avatar.addEventListener('click', function (e) {
+            e.stopPropagation();
+            dropdown.classList.toggle('active');
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!avatar.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.remove('active');
+            }
+        });
+    }
+
     const tableBody = document.getElementById('orderTableBody');
+
     const searchInput = document.getElementById('mainSearch');
     const statusFilter = document.getElementById('statusFilter');
     const priorityFilter = document.getElementById('priorityFilter');
@@ -241,20 +258,5 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 });
 
-// Dropdown Avatar
-document.addEventListener('DOMContentLoaded', function () {
-    const avatar = document.getElementById('avatarTrigger');
-    const dropdown = document.getElementById('userDropdown');
 
-    avatar.addEventListener('click', function (e) {
-        e.stopPropagation();
-        dropdown.classList.toggle('active');
-    });
-
-    document.addEventListener('click', function (e) {
-        if (!avatar.contains(e.target) && !dropdown.contains(e.target)) {
-            dropdown.classList.remove('active');
-        }
-    });
-});
 

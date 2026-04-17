@@ -18,9 +18,8 @@ document.addEventListener('DOMContentLoaded', async function () {
             populateOrderInfo(order);
             renderInvoiceItems(order);
 
-            // Determine if invoice was already created previously
-            const isInvoiceCreated = localStorage.getItem('invoice_created_' + orderId) === 'true';
-            if (isInvoiceCreated) {
+            // Check if invoice exists in DB result from getOrderById
+            if (order.invoice) {
                 // Restore visual layout of completed invoice creation
                 document.getElementById('invoiceSuccessMsg').style.display = 'block';
                 
@@ -52,33 +51,51 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     // Set up button event listeners
-    document.getElementById('createInvoiceBtn').addEventListener('click', () => {
-        // Show success message
-        document.getElementById('invoiceSuccessMsg').style.display = 'block';
-        
-        // Save progress to local storage so outer cards know
-        localStorage.setItem('invoice_created_' + orderId, 'true');
-        
-        // Disable create button
-        const createBtn = document.getElementById('createInvoiceBtn');
-        createBtn.disabled = true;
-        createBtn.style.opacity = '0.6';
-        createBtn.style.cursor = 'not-allowed';
-        
-        // Enable confirm button
-        const confirmBtn = document.getElementById('confirmInvoiceBtn');
-        if (confirmBtn) {
-            confirmBtn.disabled = false;
-            confirmBtn.style.opacity = '1';
-            confirmBtn.style.cursor = 'pointer';
-        }
-        
-        // Enable generate PDF button
-        const genPdfBtn = document.getElementById('generatePdfBtn');
-        if (genPdfBtn) {
-            genPdfBtn.disabled = false;
-            genPdfBtn.style.opacity = '1';
-            genPdfBtn.style.cursor = 'pointer';
+    document.getElementById('createInvoiceBtn').addEventListener('click', async () => {
+        try {
+            const subtotalText = document.getElementById('subtotalAmount').innerText.replace(/[^\d]/g, '');
+            const taxText = document.getElementById('taxAmount').innerText.replace(/[^\d]/g, '');
+            const totalText = document.getElementById('totalAmount').innerText.replace(/[^\d]/g, '');
+            const authUser = JSON.parse(localStorage.getItem('authUser')) || { id: 2 };
+
+            await apiPost(`/orders/${orderId}/invoice`, {
+                subtotal: parseInt(subtotalText),
+                tax: parseInt(taxText),
+                total: parseInt(totalText),
+                created_by: authUser.id
+            });
+
+            // Show success message
+            document.getElementById('invoiceSuccessMsg').style.display = 'block';
+            
+            // Save local flag as backup for other logic if needed, but DB is primary now
+            localStorage.setItem('invoice_created_' + orderId, 'true');
+            
+            // Disable create button
+            const createBtn = document.getElementById('createInvoiceBtn');
+            createBtn.disabled = true;
+            createBtn.style.opacity = '0.6';
+            createBtn.style.cursor = 'not-allowed';
+            
+            // Enable others
+            const confirmBtn = document.getElementById('confirmInvoiceBtn');
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+                confirmBtn.style.opacity = '1';
+                confirmBtn.style.cursor = 'pointer';
+            }
+            
+            const genPdfBtn = document.getElementById('generatePdfBtn');
+            if (genPdfBtn) {
+                genPdfBtn.disabled = false;
+                genPdfBtn.style.opacity = '1';
+                genPdfBtn.style.cursor = 'pointer';
+            }
+            
+            alert('Invoice saved to database successfully!');
+        } catch (error) {
+            console.error('Invoice creation failed:', error);
+            alert('Failed to save invoice: ' + error.message);
         }
     });
 

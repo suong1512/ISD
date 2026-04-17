@@ -14,6 +14,7 @@ router.patch('/:id/prepare', orderController.prepareOrder);
 router.patch('/:id/qc', orderController.qcOrder);
 router.patch('/:id/ship', orderController.shipOrder);
 router.patch('/:id/complete', orderController.completeOrder);
+router.post('/:id/invoice', orderController.createInvoice);
 router.patch('/:id', orderController.updateDraftOrder);
 router.post(
   '/:id/attachments',

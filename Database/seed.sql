@@ -15,7 +15,8 @@ INSERT INTO users (full_name, email, password, role)
 VALUES 
 ('Sales Staff 01', 'staff@example.com', '123456', 'SALES_STAFF'),
 ('Admin 01', 'admin@example.com', '123456', 'ADMIN'),
-('Accountant 01', 'accountant@example.com', '123456', 'ACCOUNTANT');
+('Accountant 01', 'accountant@example.com', '123456', 'ACCOUNTANT'),
+('Technical Staff 01', 'tech@example.com', '123456', 'TECH_STAFF');
 
 -- Products mẫu cho dropdown
 INSERT INTO products (name, unit_price)
