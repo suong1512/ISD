@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="../global.css">
     <link rel="stylesheet" href="A_dash.css">
+    </style>
 </head>
 
 <body>
@@ -134,41 +135,40 @@
                 </div>
             </div>
 
-            <div class="dashboard-grid grid-2-col" style="margin-bottom: 24px;">
-                <!-- Status Chart -->
-                <div class="card">
-                    <h2>Order Status Distribution</h2>
-                    <div class="chart-container" id="statusChartRoot" style="height: 280px; position: relative;">
-                        <p style="text-align: center; color: #999; padding-top: 100px;">Loading distribution chart...</p>
-                    </div>
+            <!-- Detailed Status Breakdown (WIDE) -->
+            <div class="card" style="margin-bottom: 24px;">
+                <div class="card-header-sub">
+                    <h2 style="margin-bottom: 0; border: none; padding: 0; font-size: 16px;">Detailed Status Breakdown</h2>
+                    <span class="total-badge" id="detailedTotalBadge">0 Total</span>
                 </div>
-
-                <!-- Bottleneck Chart -->
-                <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
-                        <h2 style="margin-bottom: 0; border: none; padding: 0;">Bottleneck Analysis (Processing Time)</h2>
-                        <span style="font-size: 11px; color:#888;">Last 24 Hours</span>
-                    </div>
-                    <div class="chart-container" id="bottleneckChartRoot" style="height: 280px;">
-                        <p style="text-align: center; color: #999; padding-top: 100px;">Loading analysis chart...</p>
-                    </div>
+                <div id="statusDetailedChartRoot" style="min-height: 120px;">
+                    <p style="text-align: center; color: #999; padding-top: 40px;">Loading breakdown...</p>
                 </div>
             </div>
 
-            <div class="dashboard-grid grid-2-col bottom-grid">
+            <!-- Order Trend Chart (NEW - WIDE) -->
+            <div class="card" style="margin-bottom: 24px;">
+                <h2 style="font-size: 16px; margin-bottom: 20px; border:none;">Order Volume Trend (Last 7 Days)</h2>
+                <div id="trendChartRoot" style="height: 250px;">
+                    <p style="text-align: center; color: #999; padding-top: 100px;">Loading trend chart...</p>
+                </div>
+            </div>
+
+            <div class="dashboard-grid grid-2-col bottom-grid" style="margin-bottom: 24px;">
+                <!-- Critical Alerts -->
                 <div class="alerts-wrapper">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h2 style="margin: 0; font-size: 16px; border:none;">Critical Alerts (Delay Detection)</h2>
+                        <h2 style="margin: 0; font-size: 16px; border:none;">Critical Alerts</h2>
                         <span id="liveIssuesBadge" style="color: #d32f2f; font-weight: bold; font-size: 12px; text-transform: uppercase;">0 LIVE ISSUES</span>
                     </div>
-
                     <div id="alertsContainer">
                         <!-- Loaded from JS -->
                     </div>
                 </div>
 
-                <div class="card activity-card">
-                    <h2 style="margin-bottom: 15px;">Recent Activity</h2>
+                <!-- Recent Activity -->
+                <div class="card activity-card" style="margin-bottom: 0;">
+                    <h2 style="margin-bottom: 15px; font-size: 16px;">Recent Activity</h2>
                     <ul class="activity-timeline" id="activityHistory">
                         <!-- Loaded from JS -->
                     </ul>
@@ -187,95 +187,118 @@
 
     <script type="text/babel" data-presets="react">
         console.log("Babel Chart Script Initializing...");
-        const { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } = window.Recharts;
+        const { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } = window.Recharts;
         
-        window.renderStatusChartRecharts = (counts) => {
-            if (!counts) return;
-            const processing = (counts['Prepared'] || 0) + (counts['Confirmed'] || 0) + (counts['Awaiting Approval'] || 0) + (counts['Other'] || 0);
-            const qc = counts['QC Checked'] || 0;
-            const shipped = (counts['Shipping'] || 0) + (counts['Completed'] || 0) + (counts['Awaiting Invoice'] || 0);
-            const onHold = (counts['Overdue'] || 0) + (counts['Rejected'] || 0);
+        window.renderTrendChartRecharts = (orders) => {
+            if (!orders) return;
             
-            let data = [
-                {name: 'Processing', value: processing},
-                {name: 'QC Testing', value: qc},
-                {name: 'Shipped', value: shipped},
-                {name: 'On Hold', value: onHold}
-            ].filter(item => item.value > 0);
-
-            if (data.length === 0) {
-                 data = [{name: 'No Data', value: 1}];
+            // Generate last 7 days range
+            const days = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                days.push(d.toISOString().split('T')[0]);
             }
 
-            const colors = {
-                'Processing': '#1976d2',
-                'QC Testing': '#4fc3f7',
-                'Shipped': '#00b050',
-                'On Hold': '#ff9800',
-                'No Data': '#cccccc'
-            };
-            
+            const data = days.map(dateStr => {
+                const count = orders.filter(o => (o.created_at || "").startsWith(dateStr)).length;
+                return {
+                    name: new Date(dateStr).toLocaleDateString([], { month: 'short', day: 'numeric' }),
+                    orders: count
+                };
+            });
+
             const ChartEl = () => (
-                <ResponsiveContainer width="100%" height={280}>
-                    <PieChart>
-                        <Pie data={data} innerRadius={80} outerRadius={110} dataKey="value" stroke="none">
-                            {data.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={colors[entry.name]} />
-                            ))}
-                        </Pie>
-                        <Tooltip formatter={(val) => `${val} Orders`} />
-                        <Legend 
-                            wrapperStyle={{
-                                fontSize: '11px',
-                                color: '#333'
-                            }}
-                            iconType="square" 
+                <ResponsiveContainer width="100%" height={250}>
+                    <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <defs>
+                            <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#1976d2" stopOpacity={0.1}/>
+                                <stop offset="95%" stopColor="#1976d2" stopOpacity={0}/>
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                        <XAxis 
+                            dataKey="name" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fontSize: 11, fill: '#888' }}
                         />
-                    </PieChart>
+                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#888' }} />
+                        <Tooltip 
+                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                        />
+                        <Area 
+                            type="monotone" 
+                            dataKey="orders" 
+                            stroke="#1976d2" 
+                            strokeWidth={2}
+                            fillOpacity={1} 
+                            fill="url(#colorOrders)" 
+                        />
+                    </AreaChart>
                 </ResponsiveContainer>
             );
             
-            const container = document.getElementById('statusChartRoot');
+            const container = document.getElementById('trendChartRoot');
             if(container) {
                 if(!container._reactRoot) { container._reactRoot = ReactDOM.createRoot(container); }
                 container._reactRoot.render(<ChartEl />);
             }
         };
 
-        window.renderBottleneckChartRecharts = (orders) => {
-            if (!orders) return;
-            const qcDelays = orders.filter(o => o.is_qc_delayed).length;
-            const packDelays = orders.filter(o => o.is_prepare_delayed).length;
-            const shipDelays = orders.filter(o => o.is_shipping_delayed).length;
+        window.renderStatusDetailedChartRecharts = (counts) => {
+            if (!counts) return;
             
-            // Base processing times (simulated) + added time per delayed items
-            const baseMultiplier = orders.length > 0 ? 1 : 0;
-            const data = [
-                { name: 'Pick', time: +(1.2 * baseMultiplier).toFixed(1) },
-                { name: 'Pack', time: +(0.8 * baseMultiplier + packDelays * 0.5).toFixed(1) },
-                { name: 'QC Inspect', time: +(2.0 * baseMultiplier + qcDelays * 1.5).toFixed(1) }, // Inflate if QC is delayed
-                { name: 'Stage', time: +(1.5 * baseMultiplier).toFixed(1) },
-                { name: 'Load', time: +(0.6 * baseMultiplier).toFixed(1) },
-                { name: 'Dispatch', time: +(0.4 * baseMultiplier + shipDelays * 1.0).toFixed(1) },
+            const rawData = [
+                { name: 'Awaiting', count: counts['Awaiting Approval'], color: '#f9a825' },
+                { name: 'Confirmed', count: counts['Confirmed'], color: '#2e7d32' },
+                { name: 'Prepared', count: counts['Prepared'], color: '#1976d2' },
+                { name: 'QC', count: counts['QC Checked'], color: '#7b1fa2' },
+                { name: 'Shipping', count: counts['Shipping'], color: '#ef6c00' },
+                { name: 'Invoice', count: counts['Awaiting Invoice'], color: '#cddc39' },
+                { name: 'Done', count: counts['Completed'], color: '#1b5e20' },
+                { name: 'Rejected', count: counts['Rejected'], color: '#c62828' },
+                { name: 'Overdue', count: counts['Overdue'], color: '#d32f2f' }
             ];
 
+            const total = Object.values(counts).reduce((a, b) => a + b, 0);
+            const badge = document.getElementById('detailedTotalBadge');
+            if (badge) badge.innerText = `${total.toLocaleString()} Total`;
+
             const ChartEl = () => (
-                <ResponsiveContainer width="100%" height={280}>
-                    <BarChart data={data} margin={{ top: 20, right: 20, left: -20, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                        <XAxis dataKey="name" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-                        <Tooltip cursor={{ fill: '#f5f5f5' }} />
-                        <Bar dataKey="time" radius={[4, 4, 0, 0]}>
-                            {data.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.name === 'QC Inspect' ? '#d32f2f' : '#1976d2'} />
+                <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={rawData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                        <defs>
+                            {rawData.map((entry, index) => (
+                                <linearGradient key={`grad-${index}`} id={`grad-${index}`} x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={entry.color} stopOpacity={0.8}/>
+                                    <stop offset="95%" stopColor={entry.color} stopOpacity={1}/>
+                                </linearGradient>
+                            ))}
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
+                        <XAxis 
+                            dataKey="name" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fontSize: 11, fontWeight: 500, fill: '#666' }}
+                        />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#999' }} />
+                        <Tooltip 
+                            cursor={{ fill: '#f5f5f5', radius: 4 }}
+                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                        />
+                        <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={40}>
+                            {rawData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={`url(#grad-${index})`} />
                             ))}
                         </Bar>
                     </BarChart>
                 </ResponsiveContainer>
             );
 
-            const container = document.getElementById('bottleneckChartRoot');
+            const container = document.getElementById('statusDetailedChartRoot');
             if(container) {
                 if(!container._reactRoot) { container._reactRoot = ReactDOM.createRoot(container); }
                 container._reactRoot.render(<ChartEl />);

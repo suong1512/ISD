@@ -105,7 +105,8 @@ document.addEventListener('DOMContentLoaded', async function () {
             const isSupplierFile = !isInitialFile;
             const downloadUrl = att.file_path; // Already starts with /uploads/
 
-            const deleteBtn = isSupplierFile ?
+            const canManageFiles = (authUser.role === 'SALES_STAFF' || authUser.role === 'ADMIN');
+            const deleteBtn = (isSupplierFile && canManageFiles) ?
                 `<button onclick="deleteAttachment(${currentOrder.id}, ${att.id})" style="background:none; border:none; color:#d32f2f; cursor:pointer; padding:5px;"><i class="fas fa-trash"></i></button>` :
                 `<span style="font-size: 10px; color: #888; padding: 5px;"><i class="fas fa-lock"></i></span>`;
 
@@ -239,6 +240,14 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
         const deptSpan = document.querySelector('.dropdown-header span');
         if (deptSpan) deptSpan.innerText = 'Sales Department';
+    }
+
+    // 8. Control Upload Permissions (Sales/Admin only)
+    const supplierUploadSection = document.getElementById('supplierUploadSection');
+    if (supplierUploadSection) {
+        if (authUser.role !== 'SALES_STAFF' && authUser.role !== 'ADMIN') {
+            supplierUploadSection.style.display = 'none';
+        }
     }
 
     // Initialize Notes

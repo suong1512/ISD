@@ -255,8 +255,8 @@ function processDashboardMetrics(orders) {
     document.getElementById('kpiDelayed').innerText = delayed.toLocaleString();
     document.getElementById('kpiQCFail').innerText = failRate + '%';
 
-    renderChart(statusCounts, orders.length);
-    renderBottleneckChart(orders);
+    renderStatusDetailedChart(statusCounts);
+    renderTrendChart(orders);
     renderAlerts(orders);
     renderActivity(orders);
 }
@@ -367,19 +367,19 @@ function getTimeAgo(dateStr) {
     return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
 }
 
-function renderChart(counts, total) {
-    if (window.renderStatusChartRecharts) {
-        window.renderStatusChartRecharts(counts, total);
+function renderTrendChart(orders) {
+    if (window.renderTrendChartRecharts) {
+        window.renderTrendChartRecharts(orders);
     } else {
-        setTimeout(() => renderChart(counts, total), 200);
+        setTimeout(() => renderTrendChart(orders), 200);
     }
 }
 
-function renderBottleneckChart(orders) {
-    if (window.renderBottleneckChartRecharts) {
-        window.renderBottleneckChartRecharts(orders);
+function renderStatusDetailedChart(counts) {
+    if (window.renderStatusDetailedChartRecharts) {
+        window.renderStatusDetailedChartRecharts(counts);
     } else {
-        setTimeout(() => renderBottleneckChart(orders), 200);
+        setTimeout(() => renderStatusDetailedChart(counts), 200);
     }
 }
 

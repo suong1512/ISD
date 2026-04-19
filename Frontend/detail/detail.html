@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,7 @@
     <link rel="stylesheet" href="detail.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body>
     <nav class="main-header">
         <div class="header-content">
@@ -17,17 +19,18 @@
             </div>
             <ul class="nav-links">
                 <li><a href="../S_tasks/S_dash.html" style="text-decoration: none; color: inherit;">Sale Task</a></li>
-                <li><a href="../S_preparing/preparing.html" style="text-decoration: none; color: inherit;">Preparing</a></li>
+                <li><a href="../S_preparing/preparing.html" style="text-decoration: none; color: inherit;">Preparing</a>
+                </li>
             </ul>
             <div class="user-actions">
                 <i class="fas fa-search"></i>
                 <i class="fas fa-bell"></i>
-    
+
                 <div class="user-profile-container">
                     <div class="user-avatar" id="avatarTrigger">JD</div>
-        
-                        <div class="user-dropdown" id="userDropdown">
-                    <div class="dropdown-header">
+
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="dropdown-header">
                             <strong>JD</strong>
                             <span>Sales Department</span>
                         </div>
@@ -51,7 +54,7 @@
     <div class="breadcrumb-wrapper">
         <div class="breadcrumb-content">
             <a href="../list/O_list.html" class="back-link"></i> Order List</a>
-             > Order Details
+            > Order Details
         </div>
     </div>
 
@@ -60,24 +63,46 @@
             <div class="header-info">
                 <h1>Order <span id="orderId">#----</span> <span class="badge">LOADING...</span></h1>
                 <p>Customer: <strong id="customerName">---</strong></p>
-            </div>    
-            
+            </div>
+
         </div>
 
         <div class="order-process-block box-card">
             <div class="progress-section">
-                 <div class="progress-wrapper">
+                <div class="progress-wrapper">
                     <div class="progress-lines" id="progressLines">
-                        <div class="line"></div> <div class="line"></div> <div class="line"></div> <div class="line"></div> <div class="line"></div>
+                        <div class="line"></div>
+                        <div class="line"></div>
+                        <div class="line"></div>
+                        <div class="line"></div>
+                        <div class="line"></div>
                     </div>
 
                     <div class="progress-steps" id="progressSteps">
-                        <div class="step" data-step="Draft"><div class="step-icon"><i class="fas fa-plus"></i></div><div class="step-label">Create</div></div>
-                        <div class="step" data-step="Awaiting Approval"><div class="step-icon"><i class="fas fa-user-shield"></i></div><div class="step-label">Approval</div></div>
-                        <div class="step" data-step="Confirmed"><div class="step-icon"><i class="fas fa-box-open"></i></div><div class="step-label">Prepare</div></div>
-                        <div class="step" data-step="QC"><div class="step-icon"><i class="fas fa-search"></i></div><div class="step-label">QC</div></div>
-                        <div class="step" data-step="Shipping"><div class="step-icon"><i class="fas fa-truck"></i></div><div class="step-label">Shipping</div></div>
-                        <div class="step" data-step="Completed"><div class="step-icon"><i class="fas fa-check-double"></i></div><div class="step-label">Done</div></div>
+                        <div class="step" data-step="Draft">
+                            <div class="step-icon"><i class="fas fa-plus"></i></div>
+                            <div class="step-label">Create</div>
+                        </div>
+                        <div class="step" data-step="Awaiting Approval">
+                            <div class="step-icon"><i class="fas fa-user-shield"></i></div>
+                            <div class="step-label">Approval</div>
+                        </div>
+                        <div class="step" data-step="Confirmed">
+                            <div class="step-icon"><i class="fas fa-box-open"></i></div>
+                            <div class="step-label">Prepare</div>
+                        </div>
+                        <div class="step" data-step="QC">
+                            <div class="step-icon"><i class="fas fa-search"></i></div>
+                            <div class="step-label">QC</div>
+                        </div>
+                        <div class="step" data-step="Shipping">
+                            <div class="step-icon"><i class="fas fa-truck"></i></div>
+                            <div class="step-label">Shipping</div>
+                        </div>
+                        <div class="step" data-step="Completed">
+                            <div class="step-icon"><i class="fas fa-check-double"></i></div>
+                            <div class="step-label">Done</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -97,7 +122,7 @@
                         <div class="product-info">
                             <p class="grid-label">PRODUCT DETAILS</p>
                             <div id="productListContainer">
-                                </div>
+                            </div>
 
                             <p class="grid-label">SHIPPING ADDRESS</p>
                             <div class="address-card">
@@ -112,15 +137,18 @@
                             <p class="grid-label">ATTACHMENTS</p>
                             <div class="file-list" id="fileListContainer">
                             </div>
-    
-                            <div class="supplier-upload-box" style="margin-top: 15px;">
+
+                            <div class="supplier-upload-box" id="supplierUploadSection" style="margin-top: 15px;">
                                 <p class="grid-label">ADD SUPPLIER/ APPENDIX FILE</p>
                                 <div class="upload-controls">
                                     <input type="file" id="supplierFileInput" hidden>
-                                    <button class="btn-upload-trigger" onclick="document.getElementById('supplierFileInput').click()">
+                                    <button class="btn-upload-trigger"
+                                        onclick="document.getElementById('supplierFileInput').click()">
                                         <i class="fas fa-cloud-upload-alt"></i> Choose File
                                     </button>
-                                    <span id="fileNameDisplay" style="font-size: 11px; color: #666; display: block; margin-top: 5px;">No file chosen</span>
+                                    <span id="fileNameDisplay"
+                                        style="font-size: 11px; color: #666; display: block; margin-top: 5px;">No file
+                                        chosen</span>
                                 </div>
                             </div>
                         </div>
@@ -144,11 +172,15 @@
                             <strong id="detExpectedDate" class="highlight-date">---</strong>
                         </div>
                         <hr>
-                        <div class="deadline-item"><span class="label">Prepare By:</span> <span id="detDeadlinePrepare">---</span></div>
-                        <div class="deadline-item"><span class="label">QC By:</span> <span id="detDeadlineQC">---</span></div>
-                        <div class="deadline-item"><span class="label">Shipping By:</span> <span id="detDeadlineShipping">---</span></div>
+                        <div class="deadline-item"><span class="label">Prepare By:</span> <span
+                                id="detDeadlinePrepare">---</span></div>
+                        <div class="deadline-item"><span class="label">QC By:</span> <span id="detDeadlineQC">---</span>
+                        </div>
+                        <div class="deadline-item"><span class="label">Shipping By:</span> <span
+                                id="detDeadlineShipping">---</span></div>
                         <hr>
-                        <div class="deadline-item sub-info"><span class="label">Created Date:</span> <span id="detCreatedDate">---</span></div>
+                        <div class="deadline-item sub-info"><span class="label">Created Date:</span> <span
+                                id="detCreatedDate">---</span></div>
                     </div>
                 </div>
 
@@ -170,5 +202,5 @@
     <script src="../api.js"></script>
     <script src="detail.js"></script>
 </body>
-</html>
 
+</html>

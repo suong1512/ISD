@@ -60,8 +60,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         const fetchedOrders = response.data || [];
         // Filter to accountant-related statuses or overdue
         allOrders = fetchedOrders.filter(o => 
-            ACCOUNTANT_STATUSES.includes(o.status) || 
-            o.is_prepare_delayed || o.is_qc_delayed || o.is_shipping_delayed || o.is_delivery_delayed
+            (ACCOUNTANT_STATUSES.includes(o.status) || 
+            o.is_prepare_delayed || o.is_qc_delayed || o.is_shipping_delayed || o.is_delivery_delayed) &&
+            o.status !== 'REJECTED' && o.status !== 'DRAFT'
         );
     } catch (error) {
         console.error('Failed to load orders:', error);
