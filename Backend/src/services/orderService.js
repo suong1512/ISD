@@ -61,6 +61,7 @@ async function getAllOrders() {
       o.shipping_completed_at,
       o.delivered_at,
       o.created_at,
+      o.updated_at,
       COALESCE(ic.item_count, 0) AS item_count
     FROM orders o
     LEFT JOIN (
@@ -97,6 +98,7 @@ async function getAllOrders() {
       qc_deadline: formatDateOnly(order.qc_deadline),
       shipping_deadline: formatDateOnly(order.shipping_deadline),
       created_at: order.created_at,
+      updated_at: order.updated_at,
       is_prepare_delayed: isPrepareDelayed,
       is_qc_delayed: isQcDelayed,
       is_shipping_delayed: isShippingDelayed,
@@ -568,7 +570,8 @@ async function confirmOrder(orderId, confirmedBy) {
       UPDATE orders
       SET status = 'CONFIRMED',
           confirmed_by = ?,
-          confirmed_at = NOW()
+          confirmed_at = NOW(),
+          updated_at = NOW()
       WHERE id = ?
       `,
       [confirmedBy, orderId]
@@ -613,7 +616,8 @@ async function rejectOrder(orderId) {
     await connection.query(
       `
       UPDATE orders
-      SET status = 'REJECTED'
+      SET status = 'REJECTED',
+          updated_at = NOW()
       WHERE id = ?
       `,
       [orderId]
@@ -995,7 +999,7 @@ async function createInvoice(orderId, invoiceData) {
 
     // 3. Update order status to AWAITING_INVOICE
     await connection.query(`
-      UPDATE orders SET status = 'AWAITING_INVOICE' WHERE id = ?
+      UPDATE orders SET status = 'AWAITING_INVOICE', updated_at = NOW() WHERE id = ?
     `, [orderId]);
 
     await connection.commit();

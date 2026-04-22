@@ -58,12 +58,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     try {
         const response = await apiGet('/orders');
         const fetchedOrders = response.data || [];
-        // Filter to accountant-related statuses or overdue
-        allOrders = fetchedOrders.filter(o => 
-            (ACCOUNTANT_STATUSES.includes(o.status) || 
-            o.is_prepare_delayed || o.is_qc_delayed || o.is_shipping_delayed || o.is_delivery_delayed) &&
-            o.status !== 'REJECTED' && o.status !== 'DRAFT'
-        );
+        // Filter to accountant-related statuses only
+        allOrders = fetchedOrders.filter(o => ACCOUNTANT_STATUSES.includes(o.status));
     } catch (error) {
         console.error('Failed to load orders:', error);
         tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#999; padding:40px;">Failed to load orders. Please check if the backend is running.</td></tr>`;
@@ -91,10 +87,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         document.getElementById('countAwaitingInvoice').textContent = orders.filter(o => o.status === 'AWAITING_INVOICE').length;
         document.getElementById('countCompleted').textContent = orders.filter(o => o.status === 'COMPLETED').length;
 
-        // Count overdue: orders that have any delay flag set (only for relevant accountant tasks or all?)
-        // User asked for Overdue status as one of the filters.
+        // Count overdue: only delivery delays for accountant-relevant orders
         const overdueCount = orders.filter(o =>
-            o.is_prepare_delayed || o.is_qc_delayed || o.is_shipping_delayed || o.is_delivery_delayed
+            o.is_delivery_delayed && o.status === 'AWAITING_INVOICE'
         ).length;
         document.getElementById('countOverdue').textContent = overdueCount;
     }
@@ -164,8 +159,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
 
             order.displayPriority = orderPriority;
-            const isOverdue = order.is_prepare_delayed || order.is_qc_delayed ||
-                order.is_shipping_delayed || order.is_delivery_delayed;
+            const isOverdue = order.is_delivery_delayed && order.status === 'AWAITING_INVOICE';
 
             // Status matching
             let matchesStatus = true;
@@ -186,15 +180,25 @@ document.addEventListener('DOMContentLoaded', async function () {
             return matchesStatus && matchesPriority && matchesSearch;
         });
 
+        // Sort: COMPLETED pushed to bottom; others sorted by most recently updated first
+        filteredOrders.sort((a, b) => {
+            const aCompleted = a.status === 'COMPLETED' ? 1 : 0;
+            const bCompleted = b.status === 'COMPLETED' ? 1 : 0;
+            if (aCompleted !== bCompleted) return aCompleted - bCompleted;
+            const tA = new Date(a.updated_at || a.created_at).getTime();
+            const tB = new Date(b.updated_at || b.created_at).getTime();
+            return tB - tA;
+        });
+
         if (filteredOrders.length === 0) {
             tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#999; padding:40px;">No orders found.</td></tr>`;
             return;
         }
 
         filteredOrders.forEach(order => {
-            const isActuallyOverdue = order.is_prepare_delayed || order.is_qc_delayed ||
-                        order.is_shipping_delayed || order.is_delivery_delayed;
-            const displayStatus = (isActuallyOverdue && order.status !== 'COMPLETED' && order.status !== 'REJECTED' && order.status !== 'DRAFT') ? 'Overdue' : mapStatus(order.status);
+            // Only check accountant-relevant delay: delivery delay on AWAITING_INVOICE
+            const isActuallyOverdue = order.is_delivery_delayed && order.status === 'AWAITING_INVOICE';
+            const displayStatus = isActuallyOverdue ? 'Overdue' : mapStatus(order.status);
             const statusClass = getStatusClass(displayStatus);
             const itemCount = `${order.item_count || 0} Items`;
             const priorityClass = order.displayPriority.toLowerCase();

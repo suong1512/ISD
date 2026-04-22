@@ -199,8 +199,20 @@ document.addEventListener('DOMContentLoaded', async function () {
             order.displayDept = orderDept;
             order.displayDeadline = relevantDeadline;
 
+            // Check Overdue status
+            const isOverdue = (order.is_prepare_delayed || order.is_qc_delayed ||
+                order.is_shipping_delayed || order.is_delivery_delayed) &&
+                order.status !== 'DRAFT' && order.status !== 'REJECTED' && order.status !== 'COMPLETED';
+
             // Lọc dữ liệu
-            const matchesStatus = (filterStatus === "All" || displayStatus === filterStatus);
+            let matchesStatus = true;
+            if (filterStatus !== 'All') {
+                if (filterStatus === 'Overdue') {
+                    matchesStatus = isOverdue;
+                } else {
+                    matchesStatus = displayStatus === filterStatus;
+                }
+            }
             const matchesPriority = (filterPriority === "All" || orderPriority === filterPriority);
             const matchesDept = (filterDept === "All" || orderDept === filterDept);
 
@@ -209,6 +221,16 @@ document.addEventListener('DOMContentLoaded', async function () {
             const matchesSearch = (orderCode.includes(searchTerm) || customerName.includes(searchTerm));
 
             return matchesStatus && matchesPriority && matchesDept && matchesSearch;
+        });
+
+        // Sort: active orders first (newest updated), COMPLETED in middle, REJECTED at very bottom
+        filteredOrders.sort((a, b) => {
+            const tier = s => s === 'REJECTED' ? 2 : s === 'COMPLETED' ? 1 : 0;
+            const diff = tier(a.status) - tier(b.status);
+            if (diff !== 0) return diff;
+            const tA = new Date(a.updated_at || a.created_at).getTime();
+            const tB = new Date(b.updated_at || b.created_at).getTime();
+            return tB - tA;
         });
 
         if (filteredOrders.length === 0) {

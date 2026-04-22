@@ -126,9 +126,15 @@ async function initConfirmationPage(config) {
                     </div>
                 </div>
 
-                <button class="btn-confirm-action" onclick="event.stopPropagation(); confirmAction('${order.id}', '${order.order_code || '#' + order.id}')">
+                ${(filterStatus === 'AWAITING_INVOICE' && !isInvoiceCreated) ? `
+                <button class="btn-confirm-action" id="btn-confirm-${order.id}" style="background-color: #e0e0e0; color: #888; cursor: not-allowed;" onclick="event.stopPropagation(); alert('Vui lòng tạo Invoice trước khi confirm và complete!');">
+                    <i class="fas fa-lock"></i> Create Invoice First
+                </button>
+                ` : `
+                <button class="btn-confirm-action" id="btn-confirm-${order.id}" onclick="event.stopPropagation(); confirmAction('${order.id}', '${order.order_code || '#' + order.id}')">
                     <i class="fas fa-check-circle"></i> ${confirmButtonText}
                 </button>
+                `}
             </div>
             `;
         }).join('');
@@ -160,6 +166,37 @@ async function initConfirmationPage(config) {
                                     <i class="far fa-file file-icon" style="color: #aaa;"></i>
                                     <span class="file-name" style="color: #aaa;">No document uploaded</span>
                                 </div>`;
+                        }
+                    }
+
+                    // Strict check for invoice logic
+                    if (filterStatus === 'AWAITING_INVOICE') {
+                        const btn = document.getElementById(`btn-confirm-${order.id}`);
+                        if (btn) {
+                            if (data.invoice) {
+                                btn.style = '';
+                                btn.className = 'btn-confirm-action';
+                                btn.onclick = (e) => { e.stopPropagation(); confirmAction(String(order.id), order.order_code || '#' + order.id); };
+                                btn.innerHTML = `<i class="fas fa-check-circle"></i> ${confirmButtonText}`;
+                                
+                                const card = document.getElementById(`order-${order.id}`);
+                                if (card && !card.innerHTML.includes('Invoice Created')) {
+                                    const aBox = document.getElementById(`attach-${order.id}`);
+                                    if (aBox) {
+                                        aBox.insertAdjacentHTML('beforebegin', `
+                                            <div class="deadline-box">
+                                                <i class="fas fa-file-invoice-dollar" style="color: #2d7a5d;"></i> Invoice Created
+                                            </div>
+                                        `);
+                                    }
+                                }
+                            } else {
+                                btn.style.backgroundColor = '#e0e0e0';
+                                btn.style.color = '#888';
+                                btn.style.cursor = 'not-allowed';
+                                btn.onclick = (e) => { e.stopPropagation(); alert('Vui lòng tạo Invoice trước khi confirm và complete!'); };
+                                btn.innerHTML = `<i class="fas fa-lock"></i> Create Invoice First`;
+                            }
                         }
                     }
                 })

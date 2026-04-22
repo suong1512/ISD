@@ -10,6 +10,25 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Initialize UI for user info
     setupUserInfo();
 
+    const authUser = JSON.parse(localStorage.getItem('authUser')) || {};
+
+    // Block Admin from creating/confirming invoices
+    if (authUser.role === 'ADMIN') {
+        const createBtn = document.getElementById('createInvoiceBtn');
+        const confirmBtn = document.getElementById('confirmInvoiceBtn');
+        if (createBtn) createBtn.style.display = 'none';
+        if (confirmBtn) confirmBtn.style.display = 'none';
+        
+        // Add a view-only message
+        const msg = document.createElement('div');
+        msg.style.padding = '15px';
+        msg.style.textAlign = 'center';
+        msg.style.color = '#888';
+        msg.style.fontStyle = 'italic';
+        msg.innerHTML = '<i class="fas fa-eye"></i> View-only mode for Administrator.';
+        document.querySelector('.action-buttons').appendChild(msg);
+    }
+
     try {
         const response = await apiGet(`/orders/${orderId}`);
         const order = response.data;

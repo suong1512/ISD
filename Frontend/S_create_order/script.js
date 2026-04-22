@@ -196,7 +196,8 @@ document.addEventListener('DOMContentLoaded', async function () {
             alert(isDraft ? "Draft saved!" : "Order created!");
             
             const authUser = JSON.parse(localStorage.getItem('authUser')) || {};
-            if (authUser.role === 'ADMIN') {
+            // Nếu là edit và là ADMIN -> về order list. Còn lại (Sale, hoặc create mới) -> về Sale Task
+            if (editId && authUser.role === 'ADMIN') {
                 window.location.href = "../list/O_list.html";
             } else {
                 window.location.href = "../S_tasks/S_dash.html";

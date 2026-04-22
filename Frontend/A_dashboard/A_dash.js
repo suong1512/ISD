@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const authUser = JSON.parse(localStorage.getItem('authUser'));
     if (!authUser || authUser.role !== 'ADMIN') {
         alert('Access denied. Administrator privileges required.');
-        window.location.href = '../A_login/A_login.html';
+        window.location.href = '../gate/gate.html';
         return;
     }
 

@@ -21,7 +21,12 @@ document.addEventListener('DOMContentLoaded', async function () {
     const invoiceBtn = document.querySelector('.invoice-btn');
     if (invoiceBtn) {
         invoiceBtn.addEventListener('click', () => {
-            window.location.href = '../AC_invoice_create/invoice.html';
+            const user = JSON.parse(localStorage.getItem('authUser') || '{}');
+            if (user.role === 'ADMIN' || user.role === 'ACCOUNTANT') {
+                window.location.href = '../AC_invoice_create/invoice.html';
+            } else {
+                alert('Access denied: Only Admin and Accountant can create invoices.');
+            }
         });
     }
 
@@ -33,6 +38,11 @@ document.addEventListener('DOMContentLoaded', async function () {
         window.location.href = '../list/O_list.html';
         return;
     }
+
+    // Initialize User Info
+    const initials = localStorage.getItem('userInitials');
+    const fullName = localStorage.getItem('currentUser');
+    const authUser = JSON.parse(localStorage.getItem('authUser')) || {};
 
     // 2. Lấy chi tiết đơn hàng từ API
     let currentOrder;
@@ -143,10 +153,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     renderTaskPanel(currentOrder);
 
     // Avatar / User info and Role-based UI adaptation
-    const initials = localStorage.getItem('userInitials');
-    const fullName = localStorage.getItem('currentUser');
-    const authUser = JSON.parse(localStorage.getItem('authUser')) || {};
-
     const avatarElement = document.getElementById('avatarTrigger');
     const dropdownName = document.querySelector('.dropdown-header strong');
 
@@ -250,6 +256,17 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
+    // Role-based and Status-based visibility for Invoice button
+    const invBtn = document.querySelector('.invoice-btn');
+    if (invBtn) {
+        const canViewRole = (authUser.role === 'ADMIN' || authUser.role === 'ACCOUNTANT');
+        const isValidStatus = (currentOrder.status === 'AWAITING_INVOICE' || currentOrder.status === 'COMPLETED');
+        
+        if (!canViewRole || !isValidStatus) {
+            invBtn.style.display = 'none';
+        }
+    }
+
     // Initialize Notes
     const notesContainer = document.getElementById('notesList');
     if (notesContainer) {
@@ -333,22 +350,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
 });
 
-// Dropdown Avatar
-document.addEventListener('DOMContentLoaded', function () {
-    const avatar = document.getElementById('avatarTrigger');
-    const dropdown = document.getElementById('userDropdown');
 
-    avatar.addEventListener('click', function (e) {
-        e.stopPropagation();
-        dropdown.classList.toggle('active');
-    });
-
-    document.addEventListener('click', function (e) {
-        if (!avatar.contains(e.target) && !dropdown.contains(e.target)) {
-            dropdown.classList.remove('active');
-        }
-    });
-});
 
 /**
  * Hàm hiển thị Badge trạng thái
@@ -357,10 +359,11 @@ function renderStatusBadge(status) {
     const statusBadge = document.querySelector('.order-info-block .badge');
     if (!statusBadge) return;
 
-    statusBadge.innerText = status.toUpperCase();
+    const safeStatus = status || 'UNKNOWN';
+    statusBadge.innerText = safeStatus.toUpperCase();
     statusBadge.className = "badge"; // Reset classes
 
-    const s = (status || "").toLowerCase();
+    const s = safeStatus.toLowerCase();
     let variant = "badge-neutral";
     if (s.includes("awaiting approval")) variant = "badge-urgent";
     else if (s.includes("qc checked")) variant = "badge-purple";
