@@ -82,11 +82,11 @@ document.addEventListener('DOMContentLoaded', async function () {
             email: document.getElementById('custEmail')?.value || "",
             special_requirements: document.getElementById('specialReq')?.value || "",
             notes: document.getElementById('orderNotes')?.value || "",
-            expected_delivery_date: document.getElementById('expectedDelivery')?.value || "",
+            expected_delivery_date: document.getElementById('expectedDelivery')?.value || null,
             contract_reference: document.getElementById('contractRef')?.value || "",
-            prepare_deadline: document.getElementById('deadlinePrepare')?.value || "",
-            qc_deadline: document.getElementById('deadlineQC')?.value || "",
-            shipping_deadline: document.getElementById('deadlineShipping')?.value || "",
+            prepare_deadline: document.getElementById('deadlinePrepare')?.value || null,
+            qc_deadline: document.getElementById('deadlineQC')?.value || null,
+            shipping_deadline: document.getElementById('deadlineShipping')?.value || null,
             created_by: JSON.parse(localStorage.getItem('authUser'))?.id || 1, // Get real user ID from auth
             items: items
         };
@@ -195,30 +195,35 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }
             }
 
-            const orderId = result.data?.id || editId;
+            const newOrderId = result.data?.id || editId;
 
-            // Upload file nếu có - thực hiện việc upload song song hoặc thông báo sau
+            // Upload file nếu có
             const fileCust = fileCustInput.files[0];
-            if (fileCust && orderId) {
-                // Hiển thị trạng thái đang upload nếu cần, ở đây ta cứ chờ nhưng có thể tách thông báo
+            if (fileCust && newOrderId) {
                 if (submitBtn) submitBtn.innerHTML = '<i class="fas fa-cloud-upload-alt fa-flip"></i> Uploading...';
                 try {
-                    await apiUploadFile(`/orders/${orderId}/attachments`, fileCust, 'CUSTOMER');
+                    await apiUploadFile(`/orders/${newOrderId}/attachments`, fileCust, 'CUSTOMER');
                 } catch (uploadErr) {
                     console.error('File upload failed:', uploadErr);
-                    // Không block flow chính nếu upload lỗi
                 }
             }
 
-            // Hiển thị thông báo ngay khi các bước quan trọng hoàn tất
-            alert(isDraft ? "Draft saved successfully!" : "Order created successfully!");
-            
-            const authUser = JSON.parse(localStorage.getItem('authUser')) || {};
-            // Điều hướng ngay lập tức
-            if (editId && authUser.role === 'ADMIN') {
-                window.location.href = "../list/O_list.html";
+            if (isDraft) {
+                alert("Draft saved successfully!");
+                const authUser = JSON.parse(localStorage.getItem('authUser')) || {};
+                if (editId && authUser.role === 'ADMIN') {
+                    window.location.href = "../list/O_list.html";
+                } else {
+                    window.location.href = "../S_tasks/S_dash.html";
+                }
             } else {
-                window.location.href = "../S_tasks/S_dash.html";
+                alert("Order created successfully!");
+                const authUser = JSON.parse(localStorage.getItem('authUser')) || {};
+                if (editId && authUser.role === 'ADMIN') {
+                    window.location.href = "../list/O_list.html";
+                } else {
+                    window.location.href = "../S_tasks/S_dash.html";
+                }
             }
 
         } catch (error) {
@@ -235,7 +240,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                 draftBtn.innerHTML = draftBtn.dataset.originalText || 'Save Draft';
             }
         }
-
     }
 
     // Gán sự kiện submit
