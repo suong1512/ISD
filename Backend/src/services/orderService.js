@@ -62,6 +62,7 @@ async function getAllOrders() {
       o.delivered_at,
       o.created_at,
       o.updated_at,
+      o.confirmed_at,
       COALESCE(ic.item_count, 0) AS item_count
     FROM orders o
     LEFT JOIN (
@@ -73,7 +74,7 @@ async function getAllOrders() {
   `);
 
   const mappedOrders = rows.map((order) => {
-    const isPrepareDelayed =
+    let isPrepareDelayed =
       !order.prepare_completed_at && isPast(order.prepare_deadline);
 
     const isQcDelayed =
@@ -82,8 +83,17 @@ async function getAllOrders() {
     const isShippingDelayed =
       !order.shipping_completed_at && isPast(order.shipping_deadline);
 
-    const isDeliveryDelayed =
+    let isDeliveryDelayed =
       !order.delivered_at && isPast(order.expected_delivery_date);
+
+    // Special logic for AWAITING_APPROVAL priority
+    if (order.status === 'AWAITING_APPROVAL' && order.prepare_deadline) {
+      const d = new Date(order.prepare_deadline);
+      d.setDate(d.getDate() + 1);
+      const deadlinePlus1 = d.toISOString().split('T')[0];
+      isPrepareDelayed = isPast(deadlinePlus1);
+      isDeliveryDelayed = false; // Only rely on prepare deadline + 1 for this status
+    }
 
     return {
       id: order.id,
@@ -1057,10 +1067,11 @@ async function getDashboardStats() {
     SELECT COUNT(*) as count FROM orders
     WHERE status NOT IN ('DRAFT', 'COMPLETED', 'REJECTED')
     AND (
-      (prepare_completed_at IS NULL AND prepare_deadline IS NOT NULL AND prepare_deadline < CURDATE())
+      (prepare_completed_at IS NULL AND prepare_deadline IS NOT NULL AND 
+        (CASE WHEN status = 'AWAITING_APPROVAL' THEN DATE_ADD(prepare_deadline, INTERVAL 1 DAY) ELSE prepare_deadline END) < CURDATE())
       OR (qc_completed_at IS NULL AND qc_deadline IS NOT NULL AND qc_deadline < CURDATE())
       OR (shipping_completed_at IS NULL AND shipping_deadline IS NOT NULL AND shipping_deadline < CURDATE())
-      OR (delivered_at IS NULL AND expected_delivery_date IS NOT NULL AND expected_delivery_date < CURDATE())
+      OR (delivered_at IS NULL AND expected_delivery_date IS NOT NULL AND status != 'AWAITING_APPROVAL' AND expected_delivery_date < CURDATE())
     )
   `);
   const overdueCount = overdueRows[0].count;
@@ -1070,10 +1081,11 @@ async function getDashboardStats() {
     SELECT COUNT(*) as count FROM orders
     WHERE status NOT IN ('DRAFT', 'COMPLETED', 'REJECTED')
     AND (
-      (prepare_deadline IS NOT NULL AND prepare_deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND prepare_completed_at IS NULL)
+      (prepare_deadline IS NOT NULL AND prepare_completed_at IS NULL AND
+        (CASE WHEN status = 'AWAITING_APPROVAL' THEN DATE_ADD(prepare_deadline, INTERVAL 1 DAY) ELSE prepare_deadline END) BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY))
       OR (qc_deadline IS NOT NULL AND qc_deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND qc_completed_at IS NULL)
       OR (shipping_deadline IS NOT NULL AND shipping_deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND shipping_completed_at IS NULL)
-      OR (expected_delivery_date IS NOT NULL AND expected_delivery_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND delivered_at IS NULL)
+      OR (expected_delivery_date IS NOT NULL AND status != 'AWAITING_APPROVAL' AND expected_delivery_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND delivered_at IS NULL)
     )
   `);
   const highPriorityCount = highPriorityRows[0].count;
@@ -1128,27 +1140,31 @@ async function getDashboardStats() {
   // 9. Alerts: get delayed orders with details
   const [alertRows] = await pool.query(`
     SELECT id, order_code, customer_name, status, updated_at,
-      (prepare_completed_at IS NULL AND prepare_deadline IS NOT NULL AND prepare_deadline < CURDATE()) as is_prepare_delayed,
+      (prepare_completed_at IS NULL AND prepare_deadline IS NOT NULL AND 
+        (CASE WHEN status = 'AWAITING_APPROVAL' THEN DATE_ADD(prepare_deadline, INTERVAL 1 DAY) ELSE prepare_deadline END) < CURDATE()) as is_prepare_delayed,
       (qc_completed_at IS NULL AND qc_deadline IS NOT NULL AND qc_deadline < CURDATE()) as is_qc_delayed,
       (shipping_completed_at IS NULL AND shipping_deadline IS NOT NULL AND shipping_deadline < CURDATE()) as is_shipping_delayed,
-      (delivered_at IS NULL AND expected_delivery_date IS NOT NULL AND expected_delivery_date < CURDATE()) as is_delivery_delayed,
+      (delivered_at IS NULL AND expected_delivery_date IS NOT NULL AND status != 'AWAITING_APPROVAL' AND expected_delivery_date < CURDATE()) as is_delivery_delayed,
       (
-        (prepare_deadline IS NOT NULL AND prepare_deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND prepare_completed_at IS NULL)
+        (prepare_deadline IS NOT NULL AND prepare_completed_at IS NULL AND
+          (CASE WHEN status = 'AWAITING_APPROVAL' THEN DATE_ADD(prepare_deadline, INTERVAL 1 DAY) ELSE prepare_deadline END) BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY))
         OR (qc_deadline IS NOT NULL AND qc_deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND qc_completed_at IS NULL)
         OR (shipping_deadline IS NOT NULL AND shipping_deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND shipping_completed_at IS NULL)
-        OR (expected_delivery_date IS NOT NULL AND expected_delivery_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND delivered_at IS NULL)
+        OR (expected_delivery_date IS NOT NULL AND status != 'AWAITING_APPROVAL' AND expected_delivery_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND delivered_at IS NULL)
       ) as is_high_priority
     FROM orders
     WHERE status NOT IN ('DRAFT', 'COMPLETED', 'REJECTED')
     AND (
-      (prepare_completed_at IS NULL AND prepare_deadline IS NOT NULL AND prepare_deadline < CURDATE())
+      (prepare_completed_at IS NULL AND prepare_deadline IS NOT NULL AND 
+        (CASE WHEN status = 'AWAITING_APPROVAL' THEN DATE_ADD(prepare_deadline, INTERVAL 1 DAY) ELSE prepare_deadline END) < CURDATE())
       OR (qc_completed_at IS NULL AND qc_deadline IS NOT NULL AND qc_deadline < CURDATE())
       OR (shipping_completed_at IS NULL AND shipping_deadline IS NOT NULL AND shipping_deadline < CURDATE())
-      OR (delivered_at IS NULL AND expected_delivery_date IS NOT NULL AND expected_delivery_date < CURDATE())
-      OR (prepare_deadline IS NOT NULL AND prepare_deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND prepare_completed_at IS NULL)
+      OR (delivered_at IS NULL AND expected_delivery_date IS NOT NULL AND status != 'AWAITING_APPROVAL' AND expected_delivery_date < CURDATE())
+      OR (prepare_deadline IS NOT NULL AND prepare_completed_at IS NULL AND
+        (CASE WHEN status = 'AWAITING_APPROVAL' THEN DATE_ADD(prepare_deadline, INTERVAL 1 DAY) ELSE prepare_deadline END) BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY))
       OR (qc_deadline IS NOT NULL AND qc_deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND qc_completed_at IS NULL)
       OR (shipping_deadline IS NOT NULL AND shipping_deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND shipping_completed_at IS NULL)
-      OR (expected_delivery_date IS NOT NULL AND expected_delivery_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND delivered_at IS NULL)
+      OR (expected_delivery_date IS NOT NULL AND status != 'AWAITING_APPROVAL' AND expected_delivery_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND delivered_at IS NULL)
     )
     ORDER BY updated_at DESC
     LIMIT 5
@@ -1220,6 +1236,46 @@ async function addNote(orderId, noteText, authorName, authorRole) {
   }
 }
 
+async function deleteNote(orderId, noteIndex) {
+  const connection = await pool.getConnection();
+  try {
+    const [rows] = await connection.query('SELECT notes FROM orders WHERE id = ?', [orderId]);
+    if (rows.length === 0) throw new Error('Order not found');
+
+    let notes = rows[0].notes || '';
+    // Split by the double newline that separates entries
+    let noteBlocks = notes.split('\n\n').filter(block => block.trim() !== '');
+    
+    // The noteIndex refers to the blocks from the top (newest first)
+    if (noteIndex >= 0 && noteIndex < noteBlocks.length) {
+      // Check if it's a "Creation Note" by checking for the header pattern
+      const hasHeader = /\[.*?\] .*?\(.*?\):/.test(noteBlocks[noteIndex]);
+      if (!hasHeader) {
+        throw new Error('Cannot delete creation notes');
+      }
+      
+      noteBlocks.splice(noteIndex, 1);
+      const updatedNotes = noteBlocks.length > 0 ? noteBlocks.join('\n\n') + '\n\n' : '';
+      
+      await connection.query(
+        'UPDATE orders SET notes = ?, updated_at = NOW() WHERE id = ?',
+        [updatedNotes, orderId]
+      );
+      
+      return { success: true, notes: updatedNotes };
+    } else {
+      throw new Error('Note not found');
+    }
+  } finally {
+    connection.release();
+  }
+}
+
+async function getInvoiceByOrderId(orderId) {
+  const [rows] = await pool.query('SELECT * FROM invoices WHERE order_id = ?', [orderId]);
+  return rows[0] || null;
+}
+
 module.exports = {
   getAllOrders,
   getOrderById,
@@ -1236,5 +1292,6 @@ module.exports = {
   createInvoice,
   getInvoiceByOrderId,
   getDashboardStats,
-  addNote
+  addNote,
+  deleteNote
 };

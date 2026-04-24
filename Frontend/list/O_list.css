@@ -1,9 +1,9 @@
 /* O_list.css specific styles */
 /* --- 3. CONTAINER CHÍNH --- */
 .container1 {
-    width: 98%;
-    max-width: 1600px;
-    margin: 30px auto;
+    width: 95%;
+    max-width: 1200px;
+    margin: 15px auto;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -55,12 +55,12 @@
 
 /* Cụm ô tìm kiếm */
 .search-main {
-    flex: 2;
+    flex: 1;
     display: flex;
     align-items: center;
-    /* Căn giữa icon và input */
     position: relative;
     min-width: 200px;
+    max-width: 400px;
 }
 
 .search-main i {
@@ -136,15 +136,15 @@
     color: #888;
     font-size: 11px;
     text-transform: uppercase;
-    padding: 12px 15px;
+    padding: 10px 8px;
     border-bottom: 1px solid #eee;
     white-space: nowrap;
 }
 
 .order-table td {
-    padding: 12px 15px;
+    padding: 10px 8px;
     border-bottom: 1px solid #f9f9f9;
-    font-size: 14px;
+    font-size: 13px;
     white-space: nowrap;
 }
 
@@ -232,39 +232,48 @@
 }
 
 /* ===== RESPONSIVE ===== */
-@media (max-width: 992px) {
-    .order-table-container {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+@media (max-width: 1200px) {
+    .container1 {
+        max-width: 1000px;
     }
-    .order-table {
-        min-width: 700px;
+}
+
+@media (max-width: 992px) {
+    .order-table th,
+    .order-table td {
+        padding: 10px;
+        font-size: 13px;
+    }
+    .order-table-container {
+        border-radius: 8px;
     }
 }
 
 @media (max-width: 768px) {
     .container1 {
-        width: 95%;
-        margin: 15px auto;
+        width: 94%;
+        margin: 10px auto;
     }
     .page-header-list {
         flex-direction: column;
         align-items: flex-start;
-        gap: 12px;
+        gap: 15px;
+        margin-bottom: 20px;
     }
     .filter-section {
-        flex-direction: column;
-        align-items: stretch;
+        padding: 12px 15px;
+        gap: 10px;
     }
     .search-main {
-        min-width: unset;
-        width: 100%;
+        max-width: none;
+        min-width: 0;
     }
     .filter-group {
-        width: 100%;
+        flex: 1;
+        min-width: 120px;
     }
     .filter-group select {
-        flex: 1;
+        width: 100%;
     }
 }
 

@@ -121,8 +121,17 @@ document.addEventListener('DOMContentLoaded', async function () {
                     orderPriority = 'None';
                     break;
                 case 'AWAITING_APPROVAL':
-                    relevantDeadline = order.expected_delivery_date;
-                    isDelayed = order.is_delivery_delayed;
+                    if (order.prepare_deadline) {
+                        const d = new Date(order.prepare_deadline);
+                        d.setDate(d.getDate() + 1);
+                        relevantDeadline = d.toISOString().split('T')[0];
+                        const dOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+                        const tOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                        isDelayed = dOnly < tOnly;
+                    } else {
+                        relevantDeadline = order.expected_delivery_date;
+                        isDelayed = order.is_delivery_delayed;
+                    }
                     break;
                 case 'CONFIRMED':
                 case 'PREPARING':

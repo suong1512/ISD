@@ -435,6 +435,22 @@ async function addNote(req, res) {
   }
 }
 
+async function deleteNote(req, res) {
+  try {
+    const { id, index } = req.params;
+    const result = await orderService.deleteNote(id, parseInt(index));
+    return res.status(200).json({
+      message: 'Note deleted successfully',
+      data: result
+    });
+  } catch (error) {
+    console.error('Error in deleteNote:', error);
+    return res.status(500).json({
+      message: error.message || 'Internal server error'
+    });
+  }
+}
+
 module.exports = {
   getAllOrders,
   getOrderById,
@@ -450,5 +466,6 @@ module.exports = {
   completeOrder,
   createInvoice,
   getDashboardStats,
-  addNote
+  addNote,
+  deleteNote
 };

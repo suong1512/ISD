@@ -30,6 +30,7 @@ router.post(
   );
 router.delete('/:id/attachments/:attachmentId', attachmentController.deleteOrderAttachment);
 router.post('/:id/notes', orderController.addNote);
+router.delete('/:id/notes/:index', orderController.deleteNote);
 router.get('/:id', orderController.getOrderById);
 
 module.exports = router;

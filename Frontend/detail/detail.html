@@ -154,15 +154,16 @@
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <div class="right-column">
                 <div class="card notes-panel">
                     <h2><i class="fas fa-sticky-note"></i> Internal Notes</h2>
                     <div id="notesList" style="margin-bottom: 10px;"></div>
                     <textarea placeholder="Add a new note..." id="newNoteInput"></textarea>
                     <button class="btn btn-add-note">Add Note</button>
                 </div>
+            </div>
+
+            <div class="right-column">
+
 
                 <div class="card deadline-panel">
                     <h2><i class="fas fa-calendar-alt"></i> Logistics & Deadlines</h2>
@@ -201,7 +202,7 @@
                 <div class="card actions-panel">
                     <h2><i class="fas fa-bolt"></i> QUICK ACTIONS</h2>
                     <div class="action-grid">
-                        <button class="action-btn"><i class="fas fa-print"></i>Label</button>
+                        <button class="action-btn" onclick="window.print()"><i class="fas fa-print"></i>Print</button>
                         <button class="action-btn invoice-btn"><i class="fas fa-file-invoice"></i>Invoice</button>
                         <button class="action-btn hold-btn" id="holdResumeBtn" onclick="toggleHold()">
                             <i class="fas fa-pause-circle"></i> <span id="holdBtnText">Hold</span>

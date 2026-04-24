@@ -302,71 +302,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
-    // Initialize Notes
-    const notesContainer = document.getElementById('notesList');
-    if (notesContainer) {
-        let notesHTML = '';
-        if (currentOrder.notes) {
-            notesHTML += `
-                <div class="note-item readonly-note" style="background:#f9f9f9; padding: 10px; border-radius: 6px; border-left: 4px solid #888; margin-bottom: 10px; font-size: 13px;">
-                    <div style="font-weight: bold; color: #555; margin-bottom: 5px;"><i class="fas fa-lock" style="font-size: 10px;"></i> Creation Notes (Read-only)</div>
-                    <div style="color: #666; white-space: pre-wrap;">${currentOrder.notes}</div>
-                </div>
-            `;
-        }
-
-        // Example logic if we had other dynamically loaded internal notes:
-        notesContainer.innerHTML = notesHTML;
-
-        // Add Note functionality loading from LocalStorage
-        const localNotesKey = `internal_notes_${orderId}`;
-
-        function renderLocalNotes() {
-            let localNotesWrapper = document.getElementById('localNotesWrapper');
-            if (!localNotesWrapper) {
-                localNotesWrapper = document.createElement('div');
-                localNotesWrapper.id = 'localNotesWrapper';
-                notesContainer.appendChild(localNotesWrapper);
-            }
-
-            const currentLocalNotes = JSON.parse(localStorage.getItem(localNotesKey) || '[]');
-            localNotesWrapper.innerHTML = currentLocalNotes.map(note => `
-                <div class="note-item" style="background:#fff3cd; padding: 10px; border-radius: 6px; border-left: 4px solid #ffc107; margin-bottom: 10px; font-size: 13px;">
-                    <div style="font-weight: bold; color: #856404; margin-bottom: 5px; display: flex; justify-content: space-between;">
-                        <span><i class="fas fa-user"></i> ${note.author}</span>
-                        <span style="font-size: 11px; opacity: 0.8;">${note.time}</span>
-                    </div>
-                    <div style="color: #666; white-space: pre-wrap;">${note.text}</div>
-                </div>
-            `).join('');
-        }
-
-        renderLocalNotes();
-
-        const addNoteBtn = document.querySelector('.btn-add-note');
-        const newNoteInput = document.getElementById('newNoteInput');
-        if (addNoteBtn && newNoteInput) {
-            addNoteBtn.addEventListener('click', () => {
-                const text = newNoteInput.value.trim();
-                if (!text) return;
-
-                const currentUser = localStorage.getItem('currentUser') || 'Unknown User';
-                const newNote = {
-                    author: currentUser,
-                    time: new Date().toLocaleString('vi-VN'),
-                    text: text
-                };
-
-                const currentNotes = JSON.parse(localStorage.getItem(localNotesKey) || '[]');
-                currentNotes.push(newNote);
-                localStorage.setItem(localNotesKey, JSON.stringify(currentNotes));
-
-                newNoteInput.value = '';
-                renderLocalNotes();
-            });
-        }
-    }
-
     // 7. Upload file từ trang Detail
     document.getElementById('supplierFileInput').addEventListener('change', async function (e) {
         const file = e.target.files[0];
@@ -566,6 +501,20 @@ window.deleteAttachment = async function (orderId, attachmentId) {
     }
 }
 
+window.deleteNote = async function (index) {
+    if (!confirm('Are you sure you want to delete this note?')) return;
+    try {
+        const orderId = sessionStorage.getItem('currentOrderId');
+        const response = await apiDelete(`/orders/${orderId}/notes/${index}`);
+        if (response.data.data.success) {
+            alert('Note deleted successfully');
+            location.reload();
+        }
+    } catch (e) {
+        alert('Could not delete note: ' + e.message);
+    }
+};
+
 function renderOrderTimeline(order) {
     const container = document.getElementById('orderTimeline');
     if (!container) return;
@@ -602,7 +551,7 @@ function renderOrderTimeline(order) {
         },
         {
             orderIndex: 2,
-            key: 'submitted_at',  // derived: first AWAITING_APPROVAL event
+            key: 'submitted_at',
             label: 'Submitted for Approval',
             desc: `by ${order.created_by_name || 'Sale Staff 01'}`,
             ring: 'ring-yellow',
@@ -613,32 +562,36 @@ function renderOrderTimeline(order) {
             key: 'confirmed_at',
             label: 'Order Confirmed',
             desc: 'by Admin 01',
-            ring: 'ring-blue'
+            ring: 'ring-blue',
+            condition: ['CONFIRMED','PREPARING','QC','SHIPPING','AWAITING_INVOICE','COMPLETED'].includes(order.status)
         },
         {
             orderIndex: 4,
             key: 'prepare_completed_at',
             label: 'Preparation Complete',
             desc: 'by Tech Staff 01',
-            ring: 'ring-blue'
+            ring: 'ring-blue',
+            condition: ['QC','SHIPPING','AWAITING_INVOICE','COMPLETED'].includes(order.status)
         },
         {
             orderIndex: 5,
             key: 'qc_completed_at',
             label: 'QC Passed',
             desc: 'by Tech Staff 01',
-            ring: 'ring-purple'
+            ring: 'ring-purple',
+            condition: ['SHIPPING','AWAITING_INVOICE','COMPLETED'].includes(order.status)
         },
         {
             orderIndex: 6,
             key: 'shipping_completed_at',
             label: 'Dispatched for Shipping',
             desc: 'by Tech Staff 01',
-            ring: 'ring-orange'
+            ring: 'ring-orange',
+            condition: ['AWAITING_INVOICE','COMPLETED'].includes(order.status)
         },
         {
             orderIndex: 7,
-            key: 'invoice_at', // derived from invoice object if exists
+            key: 'invoice_at',
             label: 'Invoice Created',
             desc: 'by Accountant Staff',
             ring: 'ring-blue',
@@ -647,9 +600,10 @@ function renderOrderTimeline(order) {
         {
             orderIndex: 8,
             key: 'delivered_at',
-            label: 'Delivered (Completed)',
-            desc: 'by Admin 01',
-            ring: 'ring-green'
+            label: 'Completed',
+            desc: '',
+            ring: 'ring-green',
+            condition: order.status === 'COMPLETED'
         }
     ];
 
@@ -660,17 +614,20 @@ function renderOrderTimeline(order) {
             items.push({ ...m, ts: order[m.key] });
             return;
         }
-        // Special case: submitted_at is not a DB field; we infer from status
-        if (m.key === 'submitted_at') {
-            if (m.condition) {
-                // Use created_at instead of updated_at so it doesn't jump down the timeline on later updates
-                items.push({ ...m, ts: order.created_at });
+
+        // Special handling for derived or status-based milestones
+        if (m.condition) {
+            let timestamp = order[m.key];
+            
+            // Fallback rules for missing timestamps
+            if (!timestamp) {
+                if (m.key === 'submitted_at') timestamp = order.created_at;
+                else if (m.key === 'invoice_at' && order.invoice) timestamp = order.invoice.created_at || order.updated_at;
+                else if (order.status === 'COMPLETED' || order.status === 'REJECTED') timestamp = order.updated_at;
             }
-            return;
-        }
-        if (m.key === 'invoice_at') {
-            if (m.condition && order.invoice) {
-                items.push({ ...m, ts: order.invoice.created_at || order.updated_at });
+
+            if (timestamp || m.condition) {
+                items.push({ ...m, ts: timestamp });
             }
             return;
         }
@@ -685,7 +642,7 @@ function renderOrderTimeline(order) {
         items.push({
             orderIndex: 99,
             label: 'Order Rejected',
-            desc: 'by Admin / Returned to Sales',
+            desc: 'by Admin',
             ring: 'ring-red',
             ts: order.updated_at
         });
@@ -693,10 +650,12 @@ function renderOrderTimeline(order) {
 
     // Sort by timestamp ascending, then by logical order
     items.sort((a, b) => {
-        if (!a.ts) return -1;
-        if (!b.ts) return 1;
-        const timeDiff = new Date(a.ts) - new Date(b.ts);
-        if (timeDiff !== 0) return timeDiff;
+        const timeA = a.ts ? new Date(a.ts).getTime() : null;
+        const timeB = b.ts ? new Date(b.ts).getTime() : null;
+
+        if (timeA && timeB && timeA !== timeB) {
+            return timeA - timeB;
+        }
         return (a.orderIndex || 0) - (b.orderIndex || 0);
     });
 
@@ -731,10 +690,34 @@ function renderNotes(rawNotes) {
         return;
     }
 
-    // Split notes by the pattern [Timestamp] Role (Name):
-    // Since our notes are prepended, we can split by double newlines or similar
-    // Actually, displaying them in a simple pre-wrap div might be enough if formatted correctly
-    list.innerHTML = `
-        <div style="white-space: pre-wrap; font-size: 13px; color: #555; background: #fffde7; padding: 12px; border-radius: 6px; border-left: 3px solid #fbc02d; max-height: 300px; overflow-y: auto;">${rawNotes}</div>
-    `;
+    const noteBlocks = rawNotes.split('\n\n').filter(b => b.trim() !== '');
+    
+    list.innerHTML = noteBlocks.map((block, index) => {
+        const hasHeader = /\[.*?\] .*?\(.*?\):/.test(block);
+        
+        if (hasHeader) {
+            // Parse header and text by splitting at the first newline
+            const firstNewline = block.indexOf('\n');
+            const header = firstNewline !== -1 ? block.substring(0, firstNewline) : block;
+            const text = firstNewline !== -1 ? block.substring(firstNewline + 1) : "";
+            
+            return `
+                <div class="note-item" style="background:#fff3cd; padding: 10px; border-radius: 6px; border-left: 4px solid #ffc107; margin-bottom: 10px; font-size: 13px;">
+                    <div style="font-weight: bold; color: #856404; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+                        <span>${header}</span>
+                        <button onclick="deleteNote(${index})" style="background:none; border:none; color:#d32f2f; cursor:pointer; padding:2px;"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                    <div style="color: #666; white-space: pre-wrap;">${text}</div>
+                </div>
+            `;
+        } else {
+            // Creation notes (no header)
+            return `
+                <div class="note-item readonly-note" style="background:#f9f9f9; padding: 10px; border-radius: 6px; border-left: 4px solid #888; margin-bottom: 10px; font-size: 13px;">
+                    <div style="font-weight: bold; color: #555; margin-bottom: 5px;"><i class="fas fa-lock" style="font-size: 10px;"></i> Creation Notes (Read-only)</div>
+                    <div style="color: #666; white-space: pre-wrap;">${block}</div>
+                </div>
+            `;
+        }
+    }).join('');
 }
