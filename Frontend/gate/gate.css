@@ -112,4 +112,19 @@ body {
         padding: 10px 15px;
         font-size: 0.95rem;
     }
+}
+
+/* FOOTER OVERRIDES CHO AUTH PAGES */
+.main-footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    margin-top: 0 !important;
+    background: transparent !important;
+    border-top: none !important;
+    padding: 15px 0;
+}
+.footer-content {
+    text-align: center;
+    color: #666;
 }

@@ -5,6 +5,7 @@ const upload = require('../config/multer');
 const attachmentController = require('../controllers/attachmentController');
 
 router.get('/', orderController.getAllOrders);
+router.get('/stats', orderController.getDashboardStats);
 router.post('/draft', orderController.createDraftOrder);
 router.post('/submit', orderController.submitOrder);
 router.patch('/:id/submit', orderController.submitDraftOrder);

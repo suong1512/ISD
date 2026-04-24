@@ -87,7 +87,7 @@
                             <h3 class="kpi-title">TOTAL ORDERS</h3>
                             <div class="kpi-val-container">
                                 <span class="kpi-value" id="totalOrders">0</span>
-                                <span class="kpi-trend text-success">+4.2%</span>
+                                <span class="kpi-trend text-success" id="kpiTotalSub"></span>
                             </div>
                         </div>
                         <div class="kpi-icon-small"><i class="fas fa-clipboard-list" style="color: #1976d2;"></i></div>
@@ -97,10 +97,10 @@
                 <div class="kpi-card">
                     <div class="kpi-info" style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
                         <div>
-                            <h3 class="kpi-title">IN PROGRESS</h3>
+                            <h3 class="kpi-title">ACTIVE ORDERS</h3>
                             <div class="kpi-val-container">
                                 <span class="kpi-value" id="kpiInProgress">0</span>
-                                <span class="kpi-trend text-muted">32% active</span>
+                                <span class="kpi-trend text-muted" id="kpiActiveSub"></span>
                             </div>
                         </div>
                         <div class="kpi-icon-small" style="background-color: #fff8e1;"><i class="fas fa-sync" style="color: #f9a825;"></i></div>
@@ -110,42 +110,55 @@
                 <div class="kpi-card alert-kpi">
                     <div class="kpi-info" style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
                         <div>
-                            <h3 class="kpi-title" style="color: #d32f2f;">DELAYED ORDERS</h3>
+                            <h3 class="kpi-title" style="color: #d32f2f;">HIGH PRIORITY</h3>
                             <div class="kpi-val-container">
                                 <span class="kpi-value" id="kpiDelayed" style="color: #d32f2f;">0</span>
-                                <span class="kpi-trend" style="color: #d32f2f;">+12% from avg</span>
+                                <span class="kpi-trend" style="color: #d32f2f;" id="kpiDelayedSub"></span>
                             </div>
                         </div>
-                        <div class="kpi-icon-small" style="background-color: #ffebee;"><i class="fas fa-exclamation-triangle" style="color: #d32f2f;"></i></div>
+                        <div class="kpi-icon-small" style="background-color: #ffebee;"><i class="fas fa-bolt" style="color: #d32f2f;"></i></div>
                     </div>
                 </div>
 
                 <div class="kpi-card">
                     <div class="kpi-info" style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
                         <div>
-                            <h3 class="kpi-title">QC FAILURE RATE</h3>
+                            <h3 class="kpi-title">AVG CYCLE TIME</h3>
                             <div class="kpi-val-container">
-                                <span class="kpi-value" id="kpiQCFail">0%</span>
-                                <span class="kpi-trend text-success">-0.1%</span>
+                                <span class="kpi-value" id="kpiCycleTime">0</span>
+                                <span class="kpi-trend text-muted" id="kpiCycleSub">30d avg</span>
                             </div>
                         </div>
-                        <div class="kpi-icon-small"><i class="fas fa-bullseye" style="color: #666;"></i></div>
+                        <div class="kpi-icon-small" style="background-color: #e8f5e9;"><i class="fas fa-stopwatch" style="color: #2e7d32;"></i></div>
                     </div>
                 </div>
             </div>
 
             <!-- Detailed Status Breakdown (WIDE) -->
             <div class="card" style="margin-bottom: 24px;">
-                <div class="card-header-sub">
-                    <h2 style="margin-bottom: 0; border: none; padding: 0; font-size: 16px;">Detailed Status Breakdown</h2>
-                    <span class="total-badge" id="detailedTotalBadge">0 Total</span>
-                </div>
+                <h2 style="margin-bottom: 16px; border: none; padding: 0; font-size: 16px;">Detailed Status Breakdown</h2>
                 <div id="statusDetailedChartRoot" style="min-height: 120px;">
                     <p style="text-align: center; color: #999; padding-top: 40px;">Loading breakdown...</p>
                 </div>
             </div>
 
-            <!-- Order Trend Chart (NEW - WIDE) -->
+            <!-- Bottleneck Analysis + Workload Distribution -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                <div class="card" style="margin-bottom: 0;">
+                    <h2 style="font-size: 16px; margin-bottom: 20px; border:none;">Bottleneck Analysis (Avg Days per Stage)</h2>
+                    <div id="bottleneckChartRoot" style="height: 250px;">
+                        <p style="text-align: center; color: #999; padding-top: 100px;">Loading bottleneck data...</p>
+                    </div>
+                </div>
+                <div class="card" style="margin-bottom: 0;">
+                    <h2 style="font-size: 16px; margin-bottom: 20px; border:none;">Workload Distribution</h2>
+                    <div id="workloadChartRoot" style="height: 250px;">
+                        <p style="text-align: center; color: #999; padding-top: 100px;">Loading workload data...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Trend Chart (WIDE) -->
             <div class="card" style="margin-bottom: 24px;">
                 <h2 style="font-size: 16px; margin-bottom: 20px; border:none;">Order Volume Trend (Last 7 Days)</h2>
                 <div id="trendChartRoot" style="height: 250px;">
@@ -167,11 +180,11 @@
 
                 <!-- Recent Activity -->
                 <div class="card activity-card" style="margin-bottom: 0;">
-                    <h2 style="margin-bottom: 15px; font-size: 16px;">Recent Activity</h2>
+                    <h2 style="margin-bottom: 15px; font-size: 16px; display: flex; align-items: baseline; justify-content: space-between;">Recent Activity <span style="font-size: 12px; color: #999; font-weight: normal;">(Last 3 Days)</span></h2>
                     <ul class="activity-timeline" id="activityHistory">
                         <!-- Loaded from JS -->
                     </ul>
-                    <button class="btn btn-outline" style="width: 100%; margin-top: 15px;">View All Logs</button>
+                    <button id="btnViewLogs" class="btn btn-outline" style="width: 100%; margin-top: 15px;">View All Logs</button>
                 </div>
             </div>
 
@@ -186,7 +199,7 @@
 
     <script type="text/babel" data-presets="react">
         console.log("Babel Chart Script Initializing...");
-        const { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } = window.Recharts;
+        const { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie, Legend } = window.Recharts;
         
         window.renderTrendChartRecharts = (orders) => {
             if (!orders) return;
@@ -262,8 +275,6 @@
             ];
 
             const total = Object.values(counts).reduce((a, b) => a + b, 0);
-            const badge = document.getElementById('detailedTotalBadge');
-            if (badge) badge.innerText = `${total.toLocaleString()} Total`;
 
             const ChartEl = () => (
                 <ResponsiveContainer width="100%" height={220}>
@@ -303,10 +314,123 @@
                 container._reactRoot.render(<ChartEl />);
             }
         };
+
+        // Bottleneck Analysis Chart (Horizontal Bar)
+        window.renderBottleneckChartRecharts = (bottleneck) => {
+            if (!bottleneck) return;
+
+            const data = [
+                { name: 'Approval', days: parseFloat(bottleneck.approval), color: '#f9a825' },
+                { name: 'Prepare', days: parseFloat(bottleneck.prepare), color: '#1976d2' },
+                { name: 'QC', days: parseFloat(bottleneck.qc), color: '#7b1fa2' },
+                { name: 'Shipping', days: parseFloat(bottleneck.shipping), color: '#ef6c00' },
+                { name: 'Invoicing', days: parseFloat(bottleneck.invoicing), color: '#2e7d32' }
+            ];
+
+            const ChartEl = () => (
+                <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={data} layout="vertical" margin={{ top: 10, right: 30, left: 20, bottom: 0 }}>
+                        <defs>
+                            {data.map((entry, index) => (
+                                <linearGradient key={`bg-${index}`} id={`bg-${index}`} x1="0" y1="0" x2="1" y2="0">
+                                    <stop offset="5%" stopColor={entry.color} stopOpacity={0.8}/>
+                                    <stop offset="95%" stopColor={entry.color} stopOpacity={1}/>
+                                </linearGradient>
+                            ))}
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#eee" />
+                        <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#999' }} unit=" d" />
+                        <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 500, fill: '#555' }} width={70} />
+                        <Tooltip
+                            cursor={{ fill: '#f5f5f5', radius: 4 }}
+                            formatter={(value) => [`${value} days`, 'Avg Duration']}
+                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                        />
+                        <Bar dataKey="days" radius={[0, 4, 4, 0]} barSize={28}>
+                            {data.map((entry, index) => (
+                                <Cell key={`cell-b-${index}`} fill={`url(#bg-${index})`} />
+                            ))}
+                        </Bar>
+                    </BarChart>
+                </ResponsiveContainer>
+            );
+
+            const container = document.getElementById('bottleneckChartRoot');
+            if(container) {
+                if(!container._reactRoot) { container._reactRoot = ReactDOM.createRoot(container); }
+                container._reactRoot.render(<ChartEl />);
+            }
+        };
+
+        // Workload Distribution Chart (Pie)
+        window.renderWorkloadChartRecharts = (workload) => {
+            if (!workload) return;
+
+            const COLORS = ['#ef6c00', '#7b1fa2', '#1976d2'];
+            const data = [
+                { name: 'Sales', value: workload.Sales || 0 },
+                { name: 'Technical', value: workload.Technical || 0 },
+                { name: 'Accountant', value: workload.Accountant || 0 }
+            ];
+
+            const total = data.reduce((a, b) => a + b.value, 0);
+
+            const ChartEl = () => (
+                <div style={{ width: '100%', height: '250px', display: 'flex', justifyContent: 'center', position: 'relative' }}>
+                    <svg width="0" height="0" style={{ position: 'absolute' }}>
+                        <defs>
+                            {data.map((entry, index) => (
+                                <linearGradient key={`pg-${index}`} id={`pg-${index}`} x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0%" stopColor={COLORS[index]} stopOpacity={0.85}/>
+                                    <stop offset="100%" stopColor={COLORS[index]} stopOpacity={1}/>
+                                </linearGradient>
+                            ))}
+                        </defs>
+                    </svg>
+                    <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                            <Pie
+                                data={data}
+                                cx="50%"
+                                cy="50%"
+                                outerRadius={95}
+                                innerRadius={45}
+                                dataKey="value"
+                                stroke="#fff"
+                                strokeWidth={3}
+                            >
+                                {data.map((entry, index) => (
+                                    <Cell key={`cell-w-${index}`} fill={`url(#pg-${index})`} />
+                                ))}
+                            </Pie>
+                            <Tooltip
+                                formatter={(value, name) => [`${value} orders (${total > 0 ? ((value/total)*100).toFixed(0) : 0}%)`, name]}
+                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                            />
+                            <Legend
+                                verticalAlign="bottom"
+                                iconType="circle"
+                                wrapperStyle={{ fontSize: '12px', fontWeight: 500 }}
+                            />
+                        </PieChart>
+                    </ResponsiveContainer>
+                </div>
+            );
+
+            const container = document.getElementById('workloadChartRoot');
+            if(container) {
+                if(!container._reactRoot) { container._reactRoot = ReactDOM.createRoot(container); }
+                container._reactRoot.render(<ChartEl />);
+            }
+        };
     </script>
     <script src="../auth.js"></script>
     <script src="../api.js"></script>
     <script src="A_dash.js"></script>
+
+    <footer class="main-footer">
+        <div class="footer-content">© 2025 Order Management System. All rights reserved.</div>
+    </footer>
 </body>
 
 </html>

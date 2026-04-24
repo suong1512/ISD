@@ -389,6 +389,23 @@ async function createInvoice(req, res) {
   }
 }
 
+async function getDashboardStats(req, res) {
+  try {
+    const stats = await orderService.getDashboardStats();
+
+    return res.status(200).json({
+      message: 'Dashboard stats fetched successfully',
+      data: stats
+    });
+  } catch (error) {
+    console.error('Error in getDashboardStats:', error);
+    return res.status(500).json({
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+}
+
 module.exports = {
   getAllOrders,
   getOrderById,
@@ -402,5 +419,6 @@ module.exports = {
   qcOrder,
   shipOrder,
   completeOrder,
-  createInvoice
+  createInvoice,
+  getDashboardStats
 };

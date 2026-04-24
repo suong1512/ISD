@@ -45,12 +45,12 @@ document.addEventListener('DOMContentLoaded', async function () {
             const titleEl = this.querySelector('.kpi-title');
             if (!titleEl) return;
             const title = titleEl.innerText;
-            if (title === 'DELAYED ORDERS') {
-                window.location.href = '../list/O_list.html?filter=Overdue';
+            if (title === 'HIGH PRIORITY') {
+                window.location.href = '../list/O_list.html?filter=priority%3DHigh';
             } else if (title === 'TOTAL ORDERS') {
                 window.location.href = '../list/O_list.html';
-            } else if (title === 'IN PROGRESS') {
-                window.location.href = '../list/O_list.html?filter=Processing';
+            } else if (title === 'ACTIVE ORDERS') {
+                window.location.href = '../list/O_list.html?filter=Active';
             }
         });
     });
@@ -62,49 +62,14 @@ document.addEventListener('DOMContentLoaded', async function () {
 });
 
 
-
-
-
-
-let statusChartInstance = null;
-
-// Colors mapping matching the requirements
-const STATUS_COLORS = {
-    'confirmed': '#2e7d32',        // Green
-    'awaiting approval': '#f9a825',// Yellow
-    'prepared': '#1976d2',         // Blue
-    'qc checked': '#7b1fa2',       // Purple
-    'shipping': '#ef6c00',         // Orange
-    'awaiting invoice': '#cddc39', // Lime
-    'overdue': '#d32f2f',          // Bright Red
-    'rejected': '#c62828',         // Dark Red
-    'completed': '#1b5e20'         // Dark Green
-};
-
-const PRIORITY_COLORS = {
-    'high': '#d32f2f',    // Red
-    'medium': '#ffb300',  // Amber
-    'low': '#4caf50',     // Green
-    'none': '#9e9e9e'     // Grey
-};
-
-const DEPT_COLORS = {
-    'technical': '#7b1fa2', // Purple
-    'sales': '#ef6c00',     // Orange
-    'accountant': '#1976d2' // Blue
-};
-
-
-
 async function loadDashboardData() {
     updateSyncTime();
 
     try {
-        const response = await apiGet('/orders');
-        // Handle both formats: direct array or {data: []}
-        const fetchedOrders = response.data || response;
+        const response = await apiGet('/orders/stats');
+        const stats = response.data;
 
-        if (!fetchedOrders || fetchedOrders.length === 0) {
+        if (!stats || stats.kpi.totalOrders === 0) {
             document.getElementById('emptyState').style.display = 'block';
             document.getElementById('dashboardContent').style.display = 'none';
             return;
@@ -113,168 +78,75 @@ async function loadDashboardData() {
         document.getElementById('emptyState').style.display = 'none';
         document.getElementById('dashboardContent').style.display = 'block';
 
-        processDashboardMetrics(fetchedOrders);
+        renderDashboard(stats);
     } catch (error) {
         console.error('Failed to load dashboard data:', error);
     }
 }
 
-function processDashboardMetrics(orders) {
-    const today = new Date();
-    const statusCounts = {
-        'Awaiting Approval': 0,
-        'Confirmed': 0,
-        'Prepared': 0,
-        'QC Checked': 0,
-        'Shipping': 0,
-        'Awaiting Invoice': 0,
-        'Completed': 0,
-        'Rejected': 0,
-        'Overdue': 0,
-        'Other': 0
-    };
+function renderDashboard(stats) {
+    // === KPI Cards (directly from backend, no client recalculation) ===
+    const kpi = stats.kpi;
 
-    const priorityCounts = { 'High': 0, 'Medium': 0, 'Low': 0, 'None': 0 };
-    const deptCounts = { 'Sales': 0, 'Technical': 0, 'Accountant': 0 };
+    document.getElementById('totalOrders').innerText = kpi.totalOrders.toLocaleString();
+    const activePct = kpi.totalOrders > 0 ? Math.round((kpi.activeOrders / kpi.totalOrders) * 100) : 0;
+    const kpiTotalSub = document.getElementById('kpiTotalSub');
+    kpiTotalSub.innerText = `orders`;
+    kpiTotalSub.className = 'kpi-trend text-muted';
 
-    orders.forEach(order => {
-        const rawStatus = order.status;
-        let displayStatus = 'Other';
+    document.getElementById('kpiInProgress').innerText = kpi.activeOrders.toLocaleString();
 
-        // --- 1. Map Status to Display Text ---
-        if (rawStatus === 'AWAITING_APPROVAL') displayStatus = 'Awaiting Approval';
-        else if (rawStatus === 'CONFIRMED') displayStatus = 'Confirmed';
-        else if (rawStatus === 'PREPARING') displayStatus = 'Prepared';
-        else if (rawStatus === 'QC') displayStatus = 'QC Checked';
-        else if (rawStatus === 'SHIPPING') displayStatus = 'Shipping';
-        else if (rawStatus === 'AWAITING_INVOICE') displayStatus = 'Awaiting Invoice';
-        else if (rawStatus === 'COMPLETED') displayStatus = 'Completed';
-        else if (rawStatus === 'REJECTED') displayStatus = 'Rejected';
+    const kpiActiveSub = document.getElementById('kpiActiveSub');
+    kpiActiveSub.innerText = `${activePct}% active`;
+    kpiActiveSub.className = 'kpi-trend text-success';
+    document.getElementById('kpiDelayed').innerText = kpi.highPriorityCount.toLocaleString();
+    document.getElementById('kpiDelayedSub').innerText = `≤ 3 days`;
+    document.getElementById('kpiCycleTime').innerText = kpi.avgCycleTime;
+    document.getElementById('kpiCycleSub').innerText = `days`;
 
-        // Check for Overdue (derived from flags or dates)
-        const isActuallyOverdue = order.is_delivery_delayed || order.is_prepare_delayed ||
-            order.is_qc_delayed || order.is_shipping_delayed;
+    // === Charts ===
+    // Status Breakdown Chart
+    renderStatusDetailedChart(stats.statusCounts);
 
-        if (isActuallyOverdue && rawStatus !== 'DRAFT' && rawStatus !== 'REJECTED' && rawStatus !== 'COMPLETED') {
-            displayStatus = 'Overdue';
-        }
+    // Order Volume Trend (use trend data from backend)
+    renderTrendChartFromStats(stats.trend);
 
-        if (statusCounts[displayStatus] !== undefined) {
-            statusCounts[displayStatus]++;
-        } else {
-            statusCounts['Other']++;
-        }
+    // Bottleneck Analysis
+    renderBottleneckChart(stats.bottleneck);
 
-        // --- 2. Map Priority based on current task deadline ---
-        let priority = 'Low';
-        let relevantDeadline = null;
-        let isDelayed = false;
+    // Workload Distribution
+    renderWorkloadChart(stats.workload);
 
-        switch (rawStatus) {
-            case 'DRAFT':
-            case 'REJECTED':
-            case 'COMPLETED':
-                priority = 'None';
-                break;
-            case 'AWAITING_APPROVAL':
-                relevantDeadline = order.expected_delivery_date;
-                isDelayed = order.is_delivery_delayed;
-                break;
-            case 'CONFIRMED':
-            case 'PREPARING':
-                relevantDeadline = order.prepare_deadline;
-                isDelayed = order.is_prepare_delayed;
-                break;
-            case 'QC':
-                relevantDeadline = order.qc_deadline;
-                isDelayed = order.is_qc_delayed;
-                break;
-            case 'SHIPPING':
-                relevantDeadline = order.shipping_deadline;
-                isDelayed = order.is_shipping_delayed;
-                break;
-            case 'AWAITING_INVOICE':
-                relevantDeadline = order.expected_delivery_date;
-                isDelayed = order.is_delivery_delayed;
-                break;
-            default:
-                relevantDeadline = order.expected_delivery_date;
-                isDelayed = order.is_delivery_delayed;
-        }
+    // === Alerts (Đề xuất 4: Red for overdue, Yellow for high priority) ===
+    renderAlerts(stats.alerts);
 
-        if (priority !== 'None') {
-            if (isDelayed) {
-                priority = 'High';
-            } else if (relevantDeadline) {
-                const deadlineDate = new Date(relevantDeadline);
-                const diffTime = deadlineDate - today;
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                if (diffDays < 0) priority = 'High';
-                else if (diffDays <= 3) priority = 'High';
-                else if (diffDays <= 7) priority = 'Medium';
-                else priority = 'Low';
-            } else {
-                priority = 'Low';
-            }
-        }
-
-        if (priorityCounts[priority] !== undefined) {
-            priorityCounts[priority]++;
-        } else {
-            priorityCounts['None']++;
-        }
-
-        // --- 3. Map Department (Derived from Status) ---
-        let dept = 'Sales';
-        if (['Awaiting Approval', 'Confirmed', 'Rejected'].includes(displayStatus)) {
-            dept = 'Sales';
-        } else if (['Prepared', 'QC Checked', 'Shipping', 'Overdue'].includes(displayStatus)) {
-            dept = 'Technical';
-        } else if (['Awaiting Invoice'].includes(displayStatus)) {
-            dept = 'Accountant';
-        }
-        deptCounts[dept]++;
-    });
-
-    const inProgress = Object.keys(statusCounts).reduce((acc, key) => {
-        if (['Prepared', 'QC Checked', 'Shipping', 'Confirmed'].includes(key)) {
-            return acc + statusCounts[key];
-        }
-        return acc;
-    }, 0);
-
-    const delayed = statusCounts['Overdue'] || 0;
-
-    // Mock QC Fail if we don't have rejection reasons
-    const qcFail = statusCounts['Rejected'] || 0;
-    const failRate = orders.length > 0 ? ((qcFail / orders.length) * 100).toFixed(1) : "0.0";
-
-    document.getElementById('totalOrders').innerText = orders.length.toLocaleString();
-    document.getElementById('kpiInProgress').innerText = inProgress.toLocaleString();
-    document.getElementById('kpiDelayed').innerText = delayed.toLocaleString();
-    document.getElementById('kpiQCFail').innerText = failRate + '%';
-
-    renderStatusDetailedChart(statusCounts);
-    renderTrendChart(orders);
-    renderAlerts(orders);
-    renderActivity(orders);
+    // === Recent Activity ===
+    renderActivity(stats.activity);
 }
 
-function renderAlerts(orders) {
+
+// Colors mapping
+const STATUS_COLORS = {
+    'confirmed': '#2e7d32',
+    'awaiting approval': '#f9a825',
+    'prepared': '#1976d2',
+    'qc checked': '#7b1fa2',
+    'shipping': '#ef6c00',
+    'awaiting invoice': '#cddc39',
+    'overdue': '#d32f2f',
+    'rejected': '#c62828',
+    'completed': '#1b5e20'
+};
+
+
+function renderAlerts(alerts) {
     const container = document.getElementById('alertsContainer');
     const badge = document.getElementById('liveIssuesBadge');
     if (!container) return;
 
-    // Filter orders with any delay
-    const delayedOrders = orders.filter(o =>
-        (o.is_delivery_delayed || o.is_qc_delayed || o.is_prepare_delayed || o.is_shipping_delayed) &&
-        o.status !== 'COMPLETED' && o.status !== 'REJECTED'
-    ).sort((a, b) => b.id - a.id);
+    badge.innerText = `${alerts.length} LIVE ISSUES`;
 
-    badge.innerText = `${delayedOrders.length} LIVE ISSUES`;
-
-    if (delayedOrders.length === 0) {
+    if (alerts.length === 0) {
         container.innerHTML = `
             <div style="background: #f9f9f9; border-radius: 8px; padding: 30px; text-align: center; border: 1px dashed #ddd;">
                 <i class="fas fa-check-circle" style="color: #52c41a; font-size: 24px; margin-bottom: 10px;"></i>
@@ -283,16 +155,28 @@ function renderAlerts(orders) {
         return;
     }
 
-    // Show top 3 most recent delays
-    const topDelays = delayedOrders.slice(0, 3);
-    container.innerHTML = topDelays.map(o => {
-        let type = 'Processing delay';
-        let icon = 'fa-clock';
-        let level = 'warning-box';
+    container.innerHTML = alerts.map(o => {
+        // Determine if overdue (red) or high priority (yellow)
+        const isOverdue = o.is_delivery_delayed || o.is_qc_delayed || o.is_prepare_delayed || o.is_shipping_delayed;
+        const isHighOnly = o.is_high_priority && !isOverdue;
 
-        if (o.is_qc_delayed) { type = 'QC Bottleneck'; icon = 'fa-microscope'; level = 'danger-box'; }
-        else if (o.is_shipping_delayed) { type = 'Logistics delay'; icon = 'fa-truck-loading'; }
-        else if (o.is_delivery_delayed) { type = 'Delivery Overdue'; icon = 'fa-calendar-times'; level = 'danger-box'; }
+        let type = 'Processing delay';
+        let icon = 'fa-user-cog';
+        if (['DRAFT', 'AWAITING_APPROVAL', 'CONFIRMED'].includes(o.status)) icon = 'fa-handshake';
+        else if (['PREPARING', 'QC', 'SHIPPING'].includes(o.status)) icon = 'fa-tools';
+        else if (o.status === 'AWAITING_INVOICE') icon = 'fa-warehouse';
+
+        let level = isOverdue ? 'danger-box' : 'warning-box';
+
+        if (isOverdue) {
+            if (o.is_qc_delayed) type = 'QC Bottleneck';
+            else if (o.is_shipping_delayed) type = 'Logistics Overdue';
+            else if (o.is_delivery_delayed) type = 'Delivery Overdue';
+            else if (o.is_prepare_delayed) type = 'Preparation Overdue';
+        } else if (isHighOnly) {
+            type = 'High Priority — Approaching Deadline';
+            level = 'warning-box';
+        }
 
         return `
             <div class="alert-box ${level}">
@@ -302,9 +186,9 @@ function renderAlerts(orders) {
                         <strong>${type} - #${o.order_code || o.id}</strong>
                         <span>${getTimeAgo(o.updated_at)}</span>
                     </div>
-                    <p>${o.customer_name || 'Customer'}${o.order_title && o.order_title !== o.customer_name ? ` - ${o.order_title}` : ''}</p>
+                    <p>${o.customer_name || 'Customer'}</p>
                     <div class="alert-box-actions">
-                        <button class="btn-warning-solid" style="padding: 4px 10px; font-size: 11px;" onclick="window.location.href='../detail/detail.html?id=${o.id}'">View Detail</button>
+                        <button class="${isOverdue ? 'btn-danger-solid' : 'btn-warning-solid'}" style="padding: 4px 10px; font-size: 11px;" onclick="sessionStorage.setItem('currentOrderId', '${o.id}'); window.location.href='../detail/detail.html'">View Detail</button>
                     </div>
                 </div>
             </div>
@@ -312,33 +196,31 @@ function renderAlerts(orders) {
     }).join('');
 }
 
-function renderActivity(orders) {
+let allActivitiesGlob = [];
+let showingAllActivities = false;
+
+function renderActivity(activities) {
+    if (activities) allActivitiesGlob = activities;
     const container = document.getElementById('activityHistory');
     if (!container) return;
 
-    // Sort by recent update/creation
-    const recent = [...orders].sort((a, b) => {
-        const timeA = new Date(a.updated_at || a.created_at).getTime();
-        const timeB = new Date(b.updated_at || b.created_at).getTime();
-        return timeB - timeA;
-    }).slice(0, 5);
+    const showCount = showingAllActivities ? allActivitiesGlob.length : 5;
+    const toRender = allActivitiesGlob.slice(0, showCount);
 
-    container.innerHTML = recent.map(o => {
+    container.innerHTML = toRender.map(o => {
         let ringClass = 'ring-gray';
-        let action = 'Update on Order';
+        let action = 'Action performed';
 
-        // Custom action text and rings based on status
         switch (o.status) {
             case 'DRAFT':
-                action = 'New order registered';
-                ringClass = 'ring-gray';
+                action = 'Order created as draft';
                 break;
             case 'AWAITING_APPROVAL':
                 action = 'Submitted for approval';
                 ringClass = 'ring-yellow';
                 break;
             case 'CONFIRMED':
-                action = 'Order approved by Admin';
+                action = 'Order approved';
                 ringClass = 'ring-blue';
                 break;
             case 'PREPARING':
@@ -358,7 +240,7 @@ function renderActivity(orders) {
                 ringClass = 'ring-blue';
                 break;
             case 'COMPLETED':
-                action = 'Order fully completed';
+                action = 'Order completed';
                 ringClass = 'ring-green';
                 break;
             case 'REJECTED':
@@ -367,30 +249,66 @@ function renderActivity(orders) {
                 break;
         }
 
+        let executorRole = 'Admin';
+        switch (o.status) {
+            case 'DRAFT':
+            case 'AWAITING_APPROVAL':
+                executorRole = 'Sale Staff';
+                break;
+            case 'PREPARING':
+            case 'QC':
+            case 'SHIPPING':
+                executorRole = 'Tech Staff';
+                break;
+            case 'AWAITING_INVOICE':
+                executorRole = 'Accountant Staff';
+                break;
+            case 'CONFIRMED':
+            case 'COMPLETED':
+            case 'REJECTED':
+                executorRole = 'Admin';
+                break;
+        }
+
+        let isSystemAction = false;
         // Handle Overdue status for ring
         const isActuallyOverdue = o.is_delivery_delayed || o.is_prepare_delayed || o.is_qc_delayed || o.is_shipping_delayed;
         if (isActuallyOverdue && !['DRAFT', 'REJECTED', 'COMPLETED'].includes(o.status)) {
             ringClass = 'ring-red';
             action = 'Flagged as overdue';
+            isSystemAction = true;
         }
 
-        // Capitalize name helper
-        const capitalize = s => s ? s.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ') : 'Client';
-        const displayCustomer = capitalize(o.customer_name);
+        let headerLine = `Order #${o.order_code || o.id}`;
+        if (!isSystemAction) {
+            headerLine += ` - ${executorRole}`;
+        }
 
         return `
             <li>
                 <div class="timeline-ring ${ringClass}"></div>
                 <div class="timeline-content">
                     <div class="timeline-header">
-                        <strong>${action}</strong>
+                        <strong>${headerLine}</strong>
                         <span>${getTimeAgo(o.updated_at || o.created_at)}</span>
                     </div>
-                    <p>Order #${o.order_code || o.id} - ${displayCustomer}</p>
+                    <p style="color: #666;">${action}</p>
                 </div>
             </li>
         `;
     }).join('');
+
+    const btn = document.getElementById('btnViewLogs');
+    if (btn) {
+        if (showingAllActivities) {
+            // If they are showing all, allow them to toggle back to 5
+            btn.innerText = 'Show Less';
+            btn.onclick = () => { showingAllActivities = false; renderActivity(); };
+        } else {
+            btn.innerText = 'View All Logs';
+            btn.onclick = () => { showingAllActivities = true; renderActivity(); };
+        }
+    }
 }
 
 function getTimeAgo(dateStr) {
@@ -407,11 +325,36 @@ function getTimeAgo(dateStr) {
     return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
 }
 
-function renderTrendChart(orders) {
+// Chart rendering wrappers (delegate to Recharts renderers defined in HTML)
+function renderTrendChartFromStats(trendData) {
     if (window.renderTrendChartRecharts) {
-        window.renderTrendChartRecharts(orders);
+        // Convert backend trend data to format expected by chart
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            days.push(d.toISOString().split('T')[0]);
+        }
+
+        // Build a lookup from backend data
+        const lookup = {};
+        trendData.forEach(row => {
+            const dateStr = new Date(row.date).toISOString().split('T')[0];
+            lookup[dateStr] = row.count;
+        });
+
+        // Create synthetic orders array for existing chart renderer
+        const fakeOrders = [];
+        days.forEach(dateStr => {
+            const count = lookup[dateStr] || 0;
+            for (let i = 0; i < count; i++) {
+                fakeOrders.push({ created_at: dateStr + 'T00:00:00' });
+            }
+        });
+
+        window.renderTrendChartRecharts(fakeOrders);
     } else {
-        setTimeout(() => renderTrendChart(orders), 200);
+        setTimeout(() => renderTrendChartFromStats(trendData), 200);
     }
 }
 
@@ -420,6 +363,22 @@ function renderStatusDetailedChart(counts) {
         window.renderStatusDetailedChartRecharts(counts);
     } else {
         setTimeout(() => renderStatusDetailedChart(counts), 200);
+    }
+}
+
+function renderBottleneckChart(bottleneck) {
+    if (window.renderBottleneckChartRecharts) {
+        window.renderBottleneckChartRecharts(bottleneck);
+    } else {
+        setTimeout(() => renderBottleneckChart(bottleneck), 200);
+    }
+}
+
+function renderWorkloadChart(workload) {
+    if (window.renderWorkloadChartRecharts) {
+        window.renderWorkloadChartRecharts(workload);
+    } else {
+        setTimeout(() => renderWorkloadChart(workload), 200);
     }
 }
 

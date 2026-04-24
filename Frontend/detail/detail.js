@@ -22,10 +22,12 @@ document.addEventListener('DOMContentLoaded', async function () {
     if (invoiceBtn) {
         invoiceBtn.addEventListener('click', () => {
             const user = JSON.parse(localStorage.getItem('authUser') || '{}');
-            if (user.role === 'ADMIN' || user.role === 'ACCOUNTANT') {
+            if (user.role === 'ADMIN') {
+                window.location.href = '../A_invoice_view/A_invoice_view.html';
+            } else if (user.role === 'ACCOUNTANT') {
                 window.location.href = '../AC_invoice_create/invoice.html';
             } else {
-                alert('Access denied: Only Admin and Accountant can create invoices.');
+                alert('Access denied: Only Admin and Accountant can view invoices.');
             }
         });
     }

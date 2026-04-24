@@ -1017,6 +1017,180 @@ async function getInvoiceByOrderId(orderId) {
   return rows.length > 0 ? rows[0] : null;
 }
 
+async function getDashboardStats() {
+  // 1. Status counts (exclude DRAFT for admin dashboard)
+  const [statusRows] = await pool.query(`
+    SELECT status, COUNT(*) as count
+    FROM orders
+    WHERE status != 'DRAFT'
+    GROUP BY status
+  `);
+
+  const statusCounts = {
+    'AWAITING_APPROVAL': 0,
+    'CONFIRMED': 0,
+    'PREPARING': 0,
+    'QC': 0,
+    'SHIPPING': 0,
+    'AWAITING_INVOICE': 0,
+    'COMPLETED': 0,
+    'REJECTED': 0
+  };
+  let totalOrders = 0;
+
+  statusRows.forEach(row => {
+    statusCounts[row.status] = row.count;
+    totalOrders += row.count;
+  });
+
+  // 2. Active Orders = All statuses except COMPLETED and REJECTED
+  const activeOrders = statusCounts['AWAITING_APPROVAL'] + statusCounts['CONFIRMED'] +
+                       statusCounts['PREPARING'] + statusCounts['QC'] +
+                       statusCounts['SHIPPING'] + statusCounts['AWAITING_INVOICE'];
+
+  // 3. Overdue count (delayed orders based on deadlines, excluding completed/rejected/draft)
+  const [overdueRows] = await pool.query(`
+    SELECT COUNT(*) as count FROM orders
+    WHERE status NOT IN ('DRAFT', 'COMPLETED', 'REJECTED')
+    AND (
+      (prepare_completed_at IS NULL AND prepare_deadline IS NOT NULL AND prepare_deadline < CURDATE())
+      OR (qc_completed_at IS NULL AND qc_deadline IS NOT NULL AND qc_deadline < CURDATE())
+      OR (shipping_completed_at IS NULL AND shipping_deadline IS NOT NULL AND shipping_deadline < CURDATE())
+      OR (delivered_at IS NULL AND expected_delivery_date IS NOT NULL AND expected_delivery_date < CURDATE())
+    )
+  `);
+  const overdueCount = overdueRows[0].count;
+
+  // 4. High priority count (deadline within 3 days but not yet overdue)
+  const [highPriorityRows] = await pool.query(`
+    SELECT COUNT(*) as count FROM orders
+    WHERE status NOT IN ('DRAFT', 'COMPLETED', 'REJECTED')
+    AND (
+      (prepare_deadline IS NOT NULL AND prepare_deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND prepare_completed_at IS NULL)
+      OR (qc_deadline IS NOT NULL AND qc_deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND qc_completed_at IS NULL)
+      OR (shipping_deadline IS NOT NULL AND shipping_deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND shipping_completed_at IS NULL)
+      OR (expected_delivery_date IS NOT NULL AND expected_delivery_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND delivered_at IS NULL)
+    )
+  `);
+  const highPriorityCount = highPriorityRows[0].count;
+
+  // 5. Order Cycle Time: avg days from created_at to updated_at for COMPLETED orders (last 30 days)
+  const [cycleRows] = await pool.query(`
+    SELECT AVG(DATEDIFF(updated_at, created_at)) as avg_days
+    FROM orders
+    WHERE status = 'COMPLETED'
+    AND updated_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+  `);
+  const avgCycleTime = cycleRows[0].avg_days ? parseFloat(cycleRows[0].avg_days).toFixed(1) : '0.0';
+
+  // 6. Workload distribution by department (only active orders, COMPLETED/REJECTED = None)
+  const workload = {
+    Sales: statusCounts['AWAITING_APPROVAL'] + statusCounts['CONFIRMED'],
+    Technical: statusCounts['PREPARING'] + statusCounts['QC'] + statusCounts['SHIPPING'],
+    Accountant: statusCounts['AWAITING_INVOICE']
+  };
+
+  // 7. Bottleneck analysis: avg days spent in each stage for completed orders
+  const [bottleneckRows] = await pool.query(`
+    SELECT
+      AVG(DATEDIFF(COALESCE(confirmed_at, updated_at), created_at)) as avg_approval,
+      AVG(DATEDIFF(COALESCE(prepare_completed_at, updated_at), COALESCE(confirmed_at, created_at))) as avg_prepare,
+      AVG(DATEDIFF(COALESCE(qc_completed_at, updated_at), COALESCE(prepare_completed_at, confirmed_at, created_at))) as avg_qc,
+      AVG(DATEDIFF(COALESCE(shipping_completed_at, updated_at), COALESCE(qc_completed_at, prepare_completed_at, created_at))) as avg_shipping,
+      AVG(DATEDIFF(COALESCE(delivered_at, updated_at), COALESCE(shipping_completed_at, qc_completed_at, created_at))) as avg_invoicing
+    FROM orders
+    WHERE status = 'COMPLETED'
+    AND updated_at >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)
+  `);
+
+  const bottleneck = bottleneckRows[0] ? {
+    approval: parseFloat(bottleneckRows[0].avg_approval || 0).toFixed(1),
+    prepare: parseFloat(bottleneckRows[0].avg_prepare || 0).toFixed(1),
+    qc: parseFloat(bottleneckRows[0].avg_qc || 0).toFixed(1),
+    shipping: parseFloat(bottleneckRows[0].avg_shipping || 0).toFixed(1),
+    invoicing: parseFloat(bottleneckRows[0].avg_invoicing || 0).toFixed(1)
+  } : { approval: '0', prepare: '0', qc: '0', shipping: '0', invoicing: '0' };
+
+  // 8. Trend data: orders created per day in last 7 days
+  const [trendRows] = await pool.query(`
+    SELECT DATE(created_at) as date, COUNT(*) as count
+    FROM orders
+    WHERE status != 'DRAFT'
+    AND created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+    GROUP BY DATE(created_at)
+    ORDER BY date ASC
+  `);
+
+  // 9. Alerts: get delayed orders with details
+  const [alertRows] = await pool.query(`
+    SELECT id, order_code, customer_name, status, updated_at,
+      (prepare_completed_at IS NULL AND prepare_deadline IS NOT NULL AND prepare_deadline < CURDATE()) as is_prepare_delayed,
+      (qc_completed_at IS NULL AND qc_deadline IS NOT NULL AND qc_deadline < CURDATE()) as is_qc_delayed,
+      (shipping_completed_at IS NULL AND shipping_deadline IS NOT NULL AND shipping_deadline < CURDATE()) as is_shipping_delayed,
+      (delivered_at IS NULL AND expected_delivery_date IS NOT NULL AND expected_delivery_date < CURDATE()) as is_delivery_delayed,
+      (
+        (prepare_deadline IS NOT NULL AND prepare_deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND prepare_completed_at IS NULL)
+        OR (qc_deadline IS NOT NULL AND qc_deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND qc_completed_at IS NULL)
+        OR (shipping_deadline IS NOT NULL AND shipping_deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND shipping_completed_at IS NULL)
+        OR (expected_delivery_date IS NOT NULL AND expected_delivery_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND delivered_at IS NULL)
+      ) as is_high_priority
+    FROM orders
+    WHERE status NOT IN ('DRAFT', 'COMPLETED', 'REJECTED')
+    AND (
+      (prepare_completed_at IS NULL AND prepare_deadline IS NOT NULL AND prepare_deadline < CURDATE())
+      OR (qc_completed_at IS NULL AND qc_deadline IS NOT NULL AND qc_deadline < CURDATE())
+      OR (shipping_completed_at IS NULL AND shipping_deadline IS NOT NULL AND shipping_deadline < CURDATE())
+      OR (delivered_at IS NULL AND expected_delivery_date IS NOT NULL AND expected_delivery_date < CURDATE())
+      OR (prepare_deadline IS NOT NULL AND prepare_deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND prepare_completed_at IS NULL)
+      OR (qc_deadline IS NOT NULL AND qc_deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND qc_completed_at IS NULL)
+      OR (shipping_deadline IS NOT NULL AND shipping_deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND shipping_completed_at IS NULL)
+      OR (expected_delivery_date IS NOT NULL AND expected_delivery_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND delivered_at IS NULL)
+    )
+    ORDER BY updated_at DESC
+    LIMIT 5
+  `);
+
+  // 10. Recent activity  
+  const [activityRows] = await pool.query(`
+    SELECT o.id, o.order_code, o.customer_name, o.status, o.updated_at, o.created_at,
+      u.full_name as created_by_name,
+      (o.prepare_completed_at IS NULL AND o.prepare_deadline IS NOT NULL AND o.prepare_deadline < CURDATE()) as is_prepare_delayed,
+      (o.qc_completed_at IS NULL AND o.qc_deadline IS NOT NULL AND o.qc_deadline < CURDATE()) as is_qc_delayed,
+      (o.shipping_completed_at IS NULL AND o.shipping_deadline IS NOT NULL AND o.shipping_deadline < CURDATE()) as is_shipping_delayed,
+      (o.delivered_at IS NULL AND o.expected_delivery_date IS NOT NULL AND o.expected_delivery_date < CURDATE()) as is_delivery_delayed
+    FROM orders o
+    LEFT JOIN users u ON o.created_by = u.id
+    WHERE o.status != 'DRAFT' AND o.updated_at >= DATE_SUB(CURDATE(), INTERVAL 3 DAY)
+    ORDER BY o.updated_at DESC
+    LIMIT 100
+  `);
+
+  return {
+    kpi: {
+      totalOrders,
+      activeOrders,
+      highPriorityCount,
+      avgCycleTime
+    },
+    statusCounts: {
+      'Awaiting Approval': statusCounts['AWAITING_APPROVAL'],
+      'Confirmed': statusCounts['CONFIRMED'],
+      'Prepared': statusCounts['PREPARING'],
+      'QC Checked': statusCounts['QC'],
+      'Shipping': statusCounts['SHIPPING'],
+      'Awaiting Invoice': statusCounts['AWAITING_INVOICE'],
+      'Completed': statusCounts['COMPLETED'],
+      'Rejected': statusCounts['REJECTED'],
+      'Overdue': overdueCount
+    },
+    workload,
+    bottleneck,
+    trend: trendRows,
+    alerts: alertRows,
+    activity: activityRows
+  };
+}
+
 module.exports = {
   getAllOrders,
   getOrderById,
@@ -1031,5 +1205,6 @@ module.exports = {
   shipOrder,
   completeOrder,
   createInvoice,
-  getInvoiceByOrderId
-};
+  getInvoiceByOrderId,
+  getDashboardStats
+};

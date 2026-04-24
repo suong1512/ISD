@@ -88,11 +88,10 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (options.includes(deptVal)) {
                 deptFilter.value = deptVal;
             }
-        } else if (filterParam.startsWith('filter=')) {
-            const filterVal = decodeURIComponent(filterParam.split('=')[1]);
-            if (filterVal === 'Overdue' && statusFilter) {
-                statusFilter.value = 'Overdue';
-            }
+        } else if (filterParam === 'Active') {
+            if (statusFilter) statusFilter.value = 'Active';
+        } else if (filterParam === 'Overdue') {
+            if (statusFilter) statusFilter.value = 'Overdue';
         }
     }
 
@@ -188,7 +187,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             // --- Determine Department ---
             let orderDept = 'Sales';
-            if (displayStatus === 'Awaiting Approval' || displayStatus === 'Confirmed' || displayStatus === 'Rejected') {
+            if (displayStatus === 'Completed' || displayStatus === 'Rejected') {
+                orderDept = 'None';
+            } else if (displayStatus === 'Awaiting Approval' || displayStatus === 'Confirmed') {
                 orderDept = 'Sales';
             } else if (displayStatus === 'Prepared' || displayStatus === 'QC Checked' || displayStatus === 'Shipping' || displayStatus === 'Overdue') {
                 orderDept = 'Tech';
@@ -209,6 +210,8 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (filterStatus !== 'All') {
                 if (filterStatus === 'Overdue') {
                     matchesStatus = isOverdue;
+                } else if (filterStatus === 'Active') {
+                    matchesStatus = (order.status !== 'DRAFT' && order.status !== 'COMPLETED' && order.status !== 'REJECTED');
                 } else {
                     matchesStatus = displayStatus === filterStatus;
                 }
@@ -251,7 +254,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             // Setup Badge priorities and dept
             const priorityClass = order.displayPriority.toLowerCase();
-            const deptClass = 'dept-' + order.displayDept.toLowerCase();
+            const deptClass = 'dept-' + order.displayDept.toLowerCase().replace('/', '');
 
             const row = document.createElement('tr');
             row.setAttribute('data-id', order.id);
