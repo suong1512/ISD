@@ -43,14 +43,11 @@
 .filter-section {
     display: flex;
     align-items: center;
-    /* CĂN GIỮA tất cả phần tử theo chiều dọc */
     gap: 15px;
-    /* Khoảng cách giữa các cụm lọc */
     background: white;
-    padding: 15px 20px;
+    padding: 10px 15px;
     border-radius: 12px 12px 0 0;
     flex-wrap: wrap;
-    /* Cho phép nhảy dòng nếu màn hình quá nhỏ */
 }
 
 /* Cụm ô tìm kiếm */
@@ -60,7 +57,6 @@
     align-items: center;
     position: relative;
     min-width: 200px;
-    max-width: 400px;
 }
 
 .search-main i {
@@ -139,6 +135,11 @@
     padding: 10px 8px;
     border-bottom: 1px solid #eee;
     white-space: nowrap;
+}
+
+.order-table th:first-child,
+.order-table td:first-child {
+    padding-left: 15px; /* Aligns with filter-section padding */
 }
 
 .order-table td {

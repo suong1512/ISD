@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         currentOrder = response.data;
     } catch (error) {
         console.error('Failed to load order:', error);
-        alert("Failed to load order: " + error.message);
+        showCustomAlert("Failed to load order: " + error.message);
         window.location.href = '../list/O_list.html';
         return;
     }
@@ -117,10 +117,11 @@ document.addEventListener('DOMContentLoaded', async function () {
             const isSupplierFile = !isInitialFile;
             const downloadUrl = att.file_path; // Already starts with /uploads/
 
-            const canManageFiles = (authUser.role === 'SALES_STAFF' || authUser.role === 'ADMIN');
+            // All roles can delete supplementary files
+            const canManageFiles = true;
             const deleteBtn = (isSupplierFile && canManageFiles) ?
-                `<button onclick="deleteAttachment(${currentOrder.id}, ${att.id})" style="background:none; border:none; color:#d32f2f; cursor:pointer; padding:5px;"><i class="fas fa-trash"></i></button>` :
-                `<span style="font-size: 10px; color: #888; padding: 5px;"><i class="fas fa-lock"></i></span>`;
+                `<button onclick="deleteAttachment(${currentOrder.id}, ${att.id})" title="Delete File" style="background:none; border:none; color:#d32f2f; cursor:pointer; padding:5px;"><i class="fas fa-trash"></i></button>` :
+                `<span style="font-size: 10px; color: #888; padding: 5px;"><i class="fas fa-lock" title="Creation file (Locked)"></i></span>`;
 
             return `
                 <div style="display: flex; align-items: stretch; gap: 5px; margin-bottom: 8px;">
@@ -179,7 +180,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     renderNotes(response.data.notes);
                 }
             } catch (e) {
-                alert('Failed to add note: ' + e.message);
+                showCustomAlert('Failed to add note: ' + e.message);
             } finally {
                 addNoteBtn.disabled = false;
                 addNoteBtn.innerText = 'Add Note';
@@ -283,10 +284,11 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (deptSpan) deptSpan.innerText = 'Sales Department';
     }
 
-    // 8. Control Upload Permissions (Sales/Admin only)
+    // 8. Control Upload Permissions (Sales, Tech, Accountant, Admin)
     const supplierUploadSection = document.getElementById('supplierUploadSection');
     if (supplierUploadSection) {
-        if (authUser.role !== 'SALES_STAFF' && authUser.role !== 'ADMIN') {
+        const canUpload = ['ADMIN', 'SALES_STAFF', 'TECH_STAFF', 'ACCOUNTANT'].includes(authUser.role);
+        if (!canUpload) {
             supplierUploadSection.style.display = 'none';
         }
     }
@@ -317,13 +319,24 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         document.getElementById('fileNameDisplay').innerText = file.name;
 
+        // Duplicate Check
+        const isDuplicate = currentOrder.attachments && currentOrder.attachments.some(att => att.file_name === file.name);
+        if (isDuplicate) {
+            showCustomAlert(`A file named "${file.name}" already exists for Order #${currentOrder.order_code}. Please rename the file or delete the existing one first.`);
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+            return;
+        }
+
         try {
             await apiUploadFile(`/orders/${orderId}/attachments`, file, 'SUPPLIER');
-            alert(`Uploaded: ${file.name}`);
-            location.reload();
+            showCustomAlert(`Uploaded: ${file.name} to Order #${currentOrder.order_code}`);
+            window.pendingReload = true;
         } catch (error) {
             console.error('Upload failed:', error);
-            alert("Upload failed: " + error.message);
+            showCustomAlert("Upload failed: " + error.message);
             if (btn) {
                 btn.disabled = false;
                 btn.innerHTML = originalHtml;
@@ -491,27 +504,29 @@ function toggleHold() {
 }
 
 window.deleteAttachment = async function (orderId, attachmentId) {
-    if (!confirm('Are you sure you want to delete this file?')) return;
+    const isConfirmed = await showCustomConfirm('Are you sure you want to delete this file?');
+    if (!isConfirmed) return;
     try {
         await apiDelete(`/orders/${orderId}/attachments/${attachmentId}`);
-        alert('File deleted successfully');
-        location.reload();
+        showCustomAlert('File deleted successfully');
+        window.pendingReload = true;
     } catch (e) {
-        alert('Could not delete file: ' + e.message);
+        showCustomAlert('Could not delete file: ' + e.message);
     }
 }
 
 window.deleteNote = async function (index) {
-    if (!confirm('Are you sure you want to delete this note?')) return;
+    const isConfirmed = await showCustomConfirm('Are you sure you want to delete this note?');
+    if (!isConfirmed) return;
     try {
         const orderId = sessionStorage.getItem('currentOrderId');
         const response = await apiDelete(`/orders/${orderId}/notes/${index}`);
-        if (response.data.data.success) {
-            alert('Note deleted successfully');
-            location.reload();
+        if (response.data.success) {
+            showCustomAlert('Note deleted successfully');
+            window.pendingReload = true;
         }
     } catch (e) {
-        alert('Could not delete note: ' + e.message);
+        showCustomAlert('Could not delete note: ' + e.message);
     }
 };
 

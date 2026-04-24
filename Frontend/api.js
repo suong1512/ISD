@@ -88,3 +88,72 @@ const STATUS_MAP = {
 function mapStatus(backendStatus) {
     return STATUS_MAP[backendStatus] || backendStatus;
 }
+
+// --- GLOBAL NOTIFICATION & CONFIRMATION SYSTEM ---
+function injectModalHTML() {
+    if (document.getElementById('customAlert')) return;
+    const modalHtml = `
+    <div id="customAlert" class="modal-overlay" style="display: none;">
+        <div class="modal-content card">
+            <div class="modal-body" id="alertMessage"></div>
+            <div class="modal-footer" id="alertFooter">
+                <button class="btn btn-primary" id="alertOkBtn">OK</button>
+            </div>
+            <div class="modal-footer" id="confirmFooter" style="display: none;">
+                <button class="btn btn-secondary" id="confirmCancelBtn">Cancel</button>
+                <button class="btn btn-primary" id="confirmOkBtn">Confirm</button>
+            </div>
+        </div>
+    </div>`;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+let modalResolver = null;
+
+window.showCustomAlert = function (message) {
+    injectModalHTML();
+    const modal = document.getElementById('customAlert');
+    const msgEl = document.getElementById('alertMessage');
+    const alertFooter = document.getElementById('alertFooter');
+    const confirmFooter = document.getElementById('confirmFooter');
+    const okBtn = document.getElementById('alertOkBtn');
+
+    msgEl.innerText = message;
+    alertFooter.style.display = 'flex';
+    confirmFooter.style.display = 'none';
+    modal.style.display = 'flex';
+
+    return new Promise((resolve) => {
+        okBtn.onclick = () => {
+            modal.style.display = 'none';
+            if (window.pendingReload) location.reload();
+            resolve(true);
+        };
+    });
+};
+
+window.showCustomConfirm = function (message) {
+    injectModalHTML();
+    const modal = document.getElementById('customAlert');
+    const msgEl = document.getElementById('alertMessage');
+    const alertFooter = document.getElementById('alertFooter');
+    const confirmFooter = document.getElementById('confirmFooter');
+    const okBtn = document.getElementById('confirmOkBtn');
+    const cancelBtn = document.getElementById('confirmCancelBtn');
+
+    msgEl.innerText = message;
+    alertFooter.style.display = 'none';
+    confirmFooter.style.display = 'flex';
+    modal.style.display = 'flex';
+
+    return new Promise((resolve) => {
+        okBtn.onclick = () => {
+            modal.style.display = 'none';
+            resolve(true);
+        };
+        cancelBtn.onclick = () => {
+            modal.style.display = 'none';
+            resolve(false);
+        };
+    });
+};

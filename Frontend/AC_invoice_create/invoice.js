@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const orderId = sessionStorage.getItem('currentOrderId');
 
     if (!orderId) {
-        alert("No Order ID found!");
+        showCustomAlert("No Order ID found!");
         window.location.href = '../list/O_list.html';
         return;
     }
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     } catch (error) {
         console.error('Failed to load order:', error);
-        alert("Failed to load order details. Please try again.");
+        showCustomAlert("Failed to load order details. Please try again.");
     }
 
     // Set up button event listeners
@@ -117,17 +117,19 @@ document.addEventListener('DOMContentLoaded', async function () {
                 genPdfBtn.style.cursor = 'pointer';
             }
             
-            alert('Invoice saved to database successfully!');
+            
+            showCustomAlert('Invoice saved to database successfully!');
         } catch (error) {
             console.error('Invoice creation failed:', error);
-            alert('Failed to save invoice: ' + error.message);
+            showCustomAlert('Failed to save invoice: ' + error.message);
             btn.disabled = false;
             btn.innerHTML = originalHtml;
         }
     });
 
     document.getElementById('confirmInvoiceBtn').addEventListener('click', async () => {
-        if (!confirm('Are you sure you want to confirm and complete this invoice?')) return;
+        const isConfirmed = await showCustomConfirm('Are you sure you want to confirm and complete this invoice?');
+        if (!isConfirmed) return;
         const btn = document.getElementById('confirmInvoiceBtn');
         const originalHtml = btn.innerHTML;
         
@@ -137,7 +139,10 @@ document.addEventListener('DOMContentLoaded', async function () {
         try {
             const authUser = JSON.parse(localStorage.getItem('authUser')) || {};
             await apiPatch(`/orders/${orderId}/complete`, { confirmed_by: authUser.id || 2 });
-            alert('Invoice confirmed and order completed successfully!');
+            showCustomAlert('Invoice confirmed and order completed successfully!');
+            // Page redirect is handled after OK in showCustomAlert if we use pendingReload or similar pattern, 
+            // but here we can just wait for the promise from showCustomAlert
+            await showCustomAlert('Invoice confirmed and order completed successfully!');
             window.location.href = '../AC_tasks/AC_dash.html';
         } catch (error) {
             console.error('Confirm action failed:', error);
@@ -148,7 +153,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
 
     document.getElementById('generatePdfBtn').addEventListener('click', () => {
-        alert('Generating PDF... (Demo)');
+        showCustomAlert('Generating PDF... (Demo)');
         window.print();
     });
 });
