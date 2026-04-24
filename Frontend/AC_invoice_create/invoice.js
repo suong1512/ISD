@@ -71,6 +71,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     // Set up button event listeners
     document.getElementById('createInvoiceBtn').addEventListener('click', async () => {
+        const btn = document.getElementById('createInvoiceBtn');
+        const originalHtml = btn.innerHTML;
+        
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
         try {
             const subtotalText = document.getElementById('subtotalAmount').innerText.replace(/[^\d]/g, '');
             const taxText = document.getElementById('taxAmount').innerText.replace(/[^\d]/g, '');
@@ -90,11 +96,11 @@ document.addEventListener('DOMContentLoaded', async function () {
             // Save local flag as backup for other logic if needed, but DB is primary now
             localStorage.setItem('invoice_created_' + orderId, 'true');
             
-            // Disable create button
-            const createBtn = document.getElementById('createInvoiceBtn');
-            createBtn.disabled = true;
-            createBtn.style.opacity = '0.6';
-            createBtn.style.cursor = 'not-allowed';
+            // Disable create button permanently for this session
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+            btn.style.cursor = 'not-allowed';
+            btn.innerHTML = originalHtml;
             
             // Enable others
             const confirmBtn = document.getElementById('confirmInvoiceBtn');
@@ -115,11 +121,19 @@ document.addEventListener('DOMContentLoaded', async function () {
         } catch (error) {
             console.error('Invoice creation failed:', error);
             alert('Failed to save invoice: ' + error.message);
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
         }
     });
 
     document.getElementById('confirmInvoiceBtn').addEventListener('click', async () => {
         if (!confirm('Are you sure you want to confirm and complete this invoice?')) return;
+        const btn = document.getElementById('confirmInvoiceBtn');
+        const originalHtml = btn.innerHTML;
+        
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Completing...';
+
         try {
             const authUser = JSON.parse(localStorage.getItem('authUser')) || {};
             await apiPatch(`/orders/${orderId}/complete`, { confirmed_by: authUser.id || 2 });
@@ -128,6 +142,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         } catch (error) {
             console.error('Confirm action failed:', error);
             alert("Error: " + error.message);
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
         }
     });
 

@@ -840,3 +840,82 @@ hr {
         padding: 4px 8px;
     }
 }
+
+/* ===== ORDER HISTORY TIMELINE ===== */
+.timeline-panel h2 {
+    color: #1976d2;
+}
+
+.activity-timeline {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.activity-timeline li {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 18px;
+    position: relative;
+}
+
+.activity-timeline li:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 18px;
+    bottom: -12px;
+    width: 2px;
+    background: #f0f0f0;
+}
+
+.timeline-ring {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 3px solid #ccc;
+    background: white;
+    z-index: 1;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.ring-blue   { border-color: #1890ff; }
+.ring-red    { border-color: #cf1322; }
+.ring-gray   { border-color: #d9d9d9; }
+.ring-green  { border-color: #52c41a; }
+.ring-yellow { border-color: #fadb14; }
+.ring-purple { border-color: #722ed1; }
+.ring-orange { border-color: #fa8c16; }
+
+.timeline-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+
+.timeline-header strong {
+    font-size: 13px;
+    color: #333;
+    line-height: 1.3;
+}
+
+.timeline-header span {
+    font-size: 11px;
+    color: #999;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.timeline-content p {
+    font-size: 12px;
+    color: #666;
+    margin: 0;
+}

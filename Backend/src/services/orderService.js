@@ -217,6 +217,10 @@ async function getOrderById(orderId) {
     created_at: order.created_at,
     updated_at: order.updated_at,
     confirmed_at: order.confirmed_at,
+    prepare_completed_at: order.prepare_completed_at,
+    qc_completed_at: order.qc_completed_at,
+    shipping_completed_at: order.shipping_completed_at,
+    delivered_at: order.delivered_at,
     created_by_name: order.created_by_name,
     invoice: order.invoice_code ? {
       code: order.invoice_code,
@@ -1191,6 +1195,31 @@ async function getDashboardStats() {
   };
 }
 
+async function addNote(orderId, noteText, authorName, authorRole) {
+  const connection = await pool.getConnection();
+
+  try {
+    const [rows] = await connection.query('SELECT notes FROM orders WHERE id = ?', [orderId]);
+    if (rows.length === 0) {
+      throw new Error('Order not found');
+    }
+
+    const currentNotes = rows[0].notes || '';
+    const timestamp = new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' });
+    const noteEntry = `[${timestamp}] ${authorRole} (${authorName}):\n${noteText}\n\n`;
+    const updatedNotes = noteEntry + currentNotes;
+
+    await connection.query(
+      'UPDATE orders SET notes = ?, updated_at = NOW() WHERE id = ?',
+      [updatedNotes, orderId]
+    );
+
+    return { success: true, notes: updatedNotes };
+  } finally {
+    connection.release();
+  }
+}
+
 module.exports = {
   getAllOrders,
   getOrderById,
@@ -1206,5 +1235,6 @@ module.exports = {
   completeOrder,
   createInvoice,
   getInvoiceByOrderId,
-  getDashboardStats
+  getDashboardStats,
+  addNote
 };

@@ -1,11 +1,10 @@
 /* O_list.css specific styles */
 /* --- 3. CONTAINER CHÍNH --- */
 .container1 {
-    width: 90%;
-    max-width: 1200px;
+    width: 98%;
+    max-width: 1600px;
     margin: 30px auto;
     flex: 1;
-    /* CỰC KỲ QUAN TRỌNG: Nó sẽ đẩy footer xuống dưới cùng */
     display: flex;
     flex-direction: column;
 }
@@ -36,7 +35,8 @@
     background: white;
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    overflow: hidden;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Khung chứa tổng thể thanh lọc */
@@ -136,13 +136,13 @@
     color: #888;
     font-size: 11px;
     text-transform: uppercase;
-    padding: 15px 20px;
+    padding: 12px 15px;
     border-bottom: 1px solid #eee;
     white-space: nowrap;
 }
 
 .order-table td {
-    padding: 15px 20px;
+    padding: 12px 15px;
     border-bottom: 1px solid #f9f9f9;
     font-size: 14px;
     white-space: nowrap;

@@ -216,6 +216,15 @@ async function initConfirmationPage(config) {
 
     // Expose confirm action globally
     window.confirmAction = async function(orderId, orderCode) {
+        const btn = document.getElementById(`btn-confirm-${orderId}`);
+        let originalHtml = '';
+        
+        if (btn) {
+            btn.disabled = true;
+            originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        }
+
         try {
             const userId = JSON.parse(localStorage.getItem('authUser'))?.id || 2;
             await apiPatch(confirmEndpoint(orderId), { confirmed_by: userId });
@@ -224,6 +233,10 @@ async function initConfirmationPage(config) {
         } catch (error) {
             console.error('Confirm action failed:', error);
             alert("Error: " + error.message);
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
         }
     };
     window.goToSpecificPage = function(orderId, targetUrl) {

@@ -29,6 +29,7 @@ router.post(
     attachmentController.addOrderAttachment
   );
 router.delete('/:id/attachments/:attachmentId', attachmentController.deleteOrderAttachment);
+router.post('/:id/notes', orderController.addNote);
 router.get('/:id', orderController.getOrderById);
 
 module.exports = router;

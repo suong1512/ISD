@@ -153,6 +153,39 @@ document.addEventListener('DOMContentLoaded', async function () {
     renderStatusBadge(displayStatus);
     updateTimeline(displayStatus);
     renderTaskPanel(currentOrder);
+    renderOrderTimeline(currentOrder);
+    renderNotes(currentOrder.notes);
+
+    // Xử lý nút Add Note
+    const addNoteBtn = document.querySelector('.btn-add-note');
+    const noteInput = document.getElementById('newNoteInput');
+    if (addNoteBtn && noteInput) {
+        addNoteBtn.addEventListener('click', async () => {
+            const noteText = noteInput.value.trim();
+            if (!noteText) return;
+
+            addNoteBtn.disabled = true;
+            addNoteBtn.innerText = 'Adding...';
+
+            try {
+                const response = await apiPost(`/orders/${orderId}/notes`, {
+                    note: noteText,
+                    authorName: fullName,
+                    authorRole: authUser.role
+                });
+
+                if (response.data.success) {
+                    noteInput.value = '';
+                    renderNotes(response.data.notes);
+                }
+            } catch (e) {
+                alert('Failed to add note: ' + e.message);
+            } finally {
+                addNoteBtn.disabled = false;
+                addNoteBtn.innerText = 'Add Note';
+            }
+        });
+    }
 
     // Avatar / User info and Role-based UI adaptation
     const avatarElement = document.getElementById('avatarTrigger');
@@ -339,6 +372,14 @@ document.addEventListener('DOMContentLoaded', async function () {
         const file = e.target.files[0];
         if (!file) return;
 
+        const btn = document.querySelector('.btn-upload-trigger');
+        let originalHtml = '';
+        if (btn) {
+            btn.disabled = true;
+            originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+        }
+
         document.getElementById('fileNameDisplay').innerText = file.name;
 
         try {
@@ -348,6 +389,10 @@ document.addEventListener('DOMContentLoaded', async function () {
         } catch (error) {
             console.error('Upload failed:', error);
             alert("Upload failed: " + error.message);
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
         }
     });
 });
@@ -519,4 +564,177 @@ window.deleteAttachment = async function (orderId, attachmentId) {
     } catch (e) {
         alert('Could not delete file: ' + e.message);
     }
+}
+
+function renderOrderTimeline(order) {
+    const container = document.getElementById('orderTimeline');
+    if (!container) return;
+
+    function timeAgo(dateStr) {
+        if (!dateStr) return null;
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return null;
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMin = Math.floor(diffMs / 60000);
+        if (diffMin < 1) return 'Just now';
+        if (diffMin < 60) return `${diffMin}m ago`;
+        const diffHr = Math.floor(diffMin / 60);
+        if (diffHr < 24) return `${diffHr}h ago`;
+        const d = new Date(dateStr);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day} ${hours}:${minutes}`;
+    }
+
+    // Build milestone list — show only completed milestones
+    const allMilestones = [
+        {
+            orderIndex: 1,
+            key: 'created_at',
+            label: 'Order Created',
+            desc: `by ${order.created_by_name || 'Sale Staff 01'}`,
+            ring: 'ring-gray',
+            alwaysShow: true
+        },
+        {
+            orderIndex: 2,
+            key: 'submitted_at',  // derived: first AWAITING_APPROVAL event
+            label: 'Submitted for Approval',
+            desc: `by ${order.created_by_name || 'Sale Staff 01'}`,
+            ring: 'ring-yellow',
+            condition: ['AWAITING_APPROVAL','CONFIRMED','PREPARING','QC','SHIPPING','AWAITING_INVOICE','COMPLETED','REJECTED'].includes(order.status)
+        },
+        {
+            orderIndex: 3,
+            key: 'confirmed_at',
+            label: 'Order Confirmed',
+            desc: 'by Admin 01',
+            ring: 'ring-blue'
+        },
+        {
+            orderIndex: 4,
+            key: 'prepare_completed_at',
+            label: 'Preparation Complete',
+            desc: 'by Tech Staff 01',
+            ring: 'ring-blue'
+        },
+        {
+            orderIndex: 5,
+            key: 'qc_completed_at',
+            label: 'QC Passed',
+            desc: 'by Tech Staff 01',
+            ring: 'ring-purple'
+        },
+        {
+            orderIndex: 6,
+            key: 'shipping_completed_at',
+            label: 'Dispatched for Shipping',
+            desc: 'by Tech Staff 01',
+            ring: 'ring-orange'
+        },
+        {
+            orderIndex: 7,
+            key: 'invoice_at', // derived from invoice object if exists
+            label: 'Invoice Created',
+            desc: 'by Accountant Staff',
+            ring: 'ring-blue',
+            condition: !!order.invoice
+        },
+        {
+            orderIndex: 8,
+            key: 'delivered_at',
+            label: 'Delivered (Completed)',
+            desc: 'by Admin 01',
+            ring: 'ring-green'
+        }
+    ];
+
+    const items = [];
+
+    allMilestones.forEach(m => {
+        if (m.alwaysShow) {
+            items.push({ ...m, ts: order[m.key] });
+            return;
+        }
+        // Special case: submitted_at is not a DB field; we infer from status
+        if (m.key === 'submitted_at') {
+            if (m.condition) {
+                // Use created_at instead of updated_at so it doesn't jump down the timeline on later updates
+                items.push({ ...m, ts: order.created_at });
+            }
+            return;
+        }
+        if (m.key === 'invoice_at') {
+            if (m.condition && order.invoice) {
+                items.push({ ...m, ts: order.invoice.created_at || order.updated_at });
+            }
+            return;
+        }
+
+        if (order[m.key]) {
+            items.push({ ...m, ts: order[m.key] });
+        }
+    });
+
+    // If order is rejected, add a Rejected entry
+    if (order.status === 'REJECTED') {
+        items.push({
+            orderIndex: 99,
+            label: 'Order Rejected',
+            desc: 'by Admin / Returned to Sales',
+            ring: 'ring-red',
+            ts: order.updated_at
+        });
+    }
+
+    // Sort by timestamp ascending, then by logical order
+    items.sort((a, b) => {
+        if (!a.ts) return -1;
+        if (!b.ts) return 1;
+        const timeDiff = new Date(a.ts) - new Date(b.ts);
+        if (timeDiff !== 0) return timeDiff;
+        return (a.orderIndex || 0) - (b.orderIndex || 0);
+    });
+
+    if (items.length === 0) {
+        container.innerHTML = `<li><div class="timeline-ring ring-gray"></div><div class="timeline-content"><div class="timeline-header"><strong>No history available</strong></div></div></li>`;
+        return;
+    }
+
+    container.innerHTML = items.map(item => {
+        const timeStr = timeAgo(item.ts) || '';
+        return `
+            <li>
+                <div class="timeline-ring ${item.ring || 'ring-gray'}"></div>
+                <div class="timeline-content">
+                    <div class="timeline-header">
+                        <strong>${item.label}</strong>
+                        <span>${timeStr}</span>
+                    </div>
+                    <p>${item.desc || ''}</p>
+                </div>
+            </li>
+        `;
+    }).join('');
+}
+
+function renderNotes(rawNotes) {
+    const list = document.getElementById('notesList');
+    if (!list) return;
+
+    if (!rawNotes || rawNotes.trim() === '') {
+        list.innerHTML = '<p style="color: #999; font-size: 13px;">No internal notes yet.</p>';
+        return;
+    }
+
+    // Split notes by the pattern [Timestamp] Role (Name):
+    // Since our notes are prepended, we can split by double newlines or similar
+    // Actually, displaying them in a simple pre-wrap div might be enough if formatted correctly
+    list.innerHTML = `
+        <div style="white-space: pre-wrap; font-size: 13px; color: #555; background: #fffde7; padding: 12px; border-radius: 6px; border-left: 3px solid #fbc02d; max-height: 300px; overflow-y: auto;">${rawNotes}</div>
+    `;
 }

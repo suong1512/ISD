@@ -406,6 +406,35 @@ async function getDashboardStats(req, res) {
   }
 }
 
+
+async function addNote(req, res) {
+  try {
+    const { id } = req.params;
+    const { note } = req.body;
+    
+    if (!note || note.trim() === '') {
+      return res.status(400).json({ message: 'Note content is required' });
+    }
+
+    // Default to 'System' if not provided (though frontend should send author info)
+    const authorName = req.body.authorName || 'User';
+    const authorRole = req.body.authorRole || 'Staff';
+
+    const result = await orderService.addNote(id, note.trim(), authorName, authorRole);
+
+    return res.status(200).json({
+      message: 'Note added successfully',
+      data: result
+    });
+  } catch (error) {
+    console.error('Error in addNote:', error);
+    return res.status(500).json({
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+}
+
 module.exports = {
   getAllOrders,
   getOrderById,
@@ -420,5 +449,6 @@ module.exports = {
   shipOrder,
   completeOrder,
   createInvoice,
-  getDashboardStats
+  getDashboardStats,
+  addNote
 };

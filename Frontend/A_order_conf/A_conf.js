@@ -108,6 +108,17 @@ async function renderAdminOrders() {
 }
 
 async function updateStatus(orderId, action) {
+    const card = document.getElementById(`order-${orderId}`);
+    const btns = card ? card.querySelectorAll('.card-actions button') : [];
+    const targetBtn = action === 'confirm' ? btns[0] : btns[1];
+    let originalHtml = '';
+
+    if (btns.length > 0) {
+        btns.forEach(b => b.disabled = true);
+        originalHtml = targetBtn.innerHTML;
+        targetBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    }
+
     try {
         if (action === 'confirm') {
             await apiPatch(`/orders/${orderId}/confirm`, { confirmed_by: JSON.parse(localStorage.getItem('authUser'))?.id || 2 });
@@ -122,6 +133,10 @@ async function updateStatus(orderId, action) {
     } catch (error) {
         console.error('Update status failed:', error);
         alert("Error: " + error.message);
+        if (btns.length > 0) {
+            btns.forEach(b => b.disabled = false);
+            targetBtn.innerHTML = originalHtml;
+        }
     }
 }
 
