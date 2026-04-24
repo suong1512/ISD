@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     // 2. Map UI - User Info
     const initials = localStorage.getItem('userInitials') || 'AD';
     const fullName = authUser.full_name || localStorage.getItem('currentUser') || 'Admin';
-    
+
     const avatarElement = document.getElementById('avatarTrigger');
     const dropdownName = document.getElementById('dropdownName');
     const dropdownStrong = document.querySelector('.dropdown-header strong');
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     // 5. Setup KPI Card Interactions
     document.querySelectorAll('.kpi-card').forEach(card => {
         card.style.cursor = 'pointer';
-        card.addEventListener('click', function() {
+        card.addEventListener('click', function () {
             const titleEl = this.querySelector('.kpi-title');
             if (!titleEl) return;
             const title = titleEl.innerText;
@@ -103,7 +103,7 @@ async function loadDashboardData() {
         const response = await apiGet('/orders');
         // Handle both formats: direct array or {data: []}
         const fetchedOrders = response.data || response;
-        
+
         if (!fetchedOrders || fetchedOrders.length === 0) {
             document.getElementById('emptyState').style.display = 'block';
             document.getElementById('dashboardContent').style.display = 'none';
@@ -152,9 +152,9 @@ function processDashboardMetrics(orders) {
         else if (rawStatus === 'REJECTED') displayStatus = 'Rejected';
 
         // Check for Overdue (derived from flags or dates)
-        const isActuallyOverdue = order.is_delivery_delayed || order.is_prepare_delayed || 
-                                order.is_qc_delayed || order.is_shipping_delayed;
-        
+        const isActuallyOverdue = order.is_delivery_delayed || order.is_prepare_delayed ||
+            order.is_qc_delayed || order.is_shipping_delayed;
+
         if (isActuallyOverdue && rawStatus !== 'DRAFT' && rawStatus !== 'REJECTED' && rawStatus !== 'COMPLETED') {
             displayStatus = 'Overdue';
         }
@@ -218,7 +218,7 @@ function processDashboardMetrics(orders) {
                 priority = 'Low';
             }
         }
-        
+
         if (priorityCounts[priority] !== undefined) {
             priorityCounts[priority]++;
         } else {
@@ -245,7 +245,7 @@ function processDashboardMetrics(orders) {
     }, 0);
 
     const delayed = statusCounts['Overdue'] || 0;
-    
+
     // Mock QC Fail if we don't have rejection reasons
     const qcFail = statusCounts['Rejected'] || 0;
     const failRate = orders.length > 0 ? ((qcFail / orders.length) * 100).toFixed(1) : "0.0";
@@ -267,11 +267,11 @@ function renderAlerts(orders) {
     if (!container) return;
 
     // Filter orders with any delay
-    const delayedOrders = orders.filter(o => 
+    const delayedOrders = orders.filter(o =>
         (o.is_delivery_delayed || o.is_qc_delayed || o.is_prepare_delayed || o.is_shipping_delayed) &&
         o.status !== 'COMPLETED' && o.status !== 'REJECTED'
     ).sort((a, b) => b.id - a.id);
-    
+
     badge.innerText = `${delayedOrders.length} LIVE ISSUES`;
 
     if (delayedOrders.length === 0) {
@@ -289,11 +289,11 @@ function renderAlerts(orders) {
         let type = 'Processing delay';
         let icon = 'fa-clock';
         let level = 'warning-box';
-        
+
         if (o.is_qc_delayed) { type = 'QC Bottleneck'; icon = 'fa-microscope'; level = 'danger-box'; }
         else if (o.is_shipping_delayed) { type = 'Logistics delay'; icon = 'fa-truck-loading'; }
         else if (o.is_delivery_delayed) { type = 'Delivery Overdue'; icon = 'fa-calendar-times'; level = 'danger-box'; }
-        
+
         return `
             <div class="alert-box ${level}">
                 <div class="alert-box-icon"><i class="fas ${icon}"></i></div>
@@ -302,7 +302,7 @@ function renderAlerts(orders) {
                         <strong>${type} - #${o.order_code || o.id}</strong>
                         <span>${getTimeAgo(o.updated_at)}</span>
                     </div>
-                    <p>${o.customer_name || 'Customer'} - ${o.order_title || 'Untitled Order'}</p>
+                    <p>${o.customer_name || 'Customer'}${o.order_title && o.order_title !== o.customer_name ? ` - ${o.order_title}` : ''}</p>
                     <div class="alert-box-actions">
                         <button class="btn-warning-solid" style="padding: 4px 10px; font-size: 11px;" onclick="window.location.href='../detail/detail.html?id=${o.id}'">View Detail</button>
                     </div>
@@ -317,36 +317,76 @@ function renderActivity(orders) {
     if (!container) return;
 
     // Sort by recent update/creation
-    const recent = [...orders].sort((a,b) => {
+    const recent = [...orders].sort((a, b) => {
         const timeA = new Date(a.updated_at || a.created_at).getTime();
         const timeB = new Date(b.updated_at || b.created_at).getTime();
         return timeB - timeA;
     }).slice(0, 5);
-    
+
     container.innerHTML = recent.map(o => {
         let ringClass = 'ring-gray';
-        let action = 'State changed to';
-        
-        if (['SHIPPING', 'AWAITING_INVOICE', 'COMPLETED'].includes(o.status)) {
-            ringClass = 'ring-blue';
-            action = 'Progressed to';
-        } else if (o.status === 'REJECTED') {
-            ringClass = 'ring-red';
-            action = 'Order was';
-        } else if (o.status === 'CONFIRMED') {
-            ringClass = 'ring-blue';
-            action = 'Admin approved';
+        let action = 'Update on Order';
+
+        // Custom action text and rings based on status
+        switch (o.status) {
+            case 'DRAFT':
+                action = 'New order registered';
+                ringClass = 'ring-gray';
+                break;
+            case 'AWAITING_APPROVAL':
+                action = 'Submitted for approval';
+                ringClass = 'ring-yellow';
+                break;
+            case 'CONFIRMED':
+                action = 'Order approved by Admin';
+                ringClass = 'ring-blue';
+                break;
+            case 'PREPARING':
+                action = 'Moved to preparation';
+                ringClass = 'ring-blue';
+                break;
+            case 'QC':
+                action = 'Transitioned to QC check';
+                ringClass = 'ring-purple';
+                break;
+            case 'SHIPPING':
+                action = 'Dispatched for shipping';
+                ringClass = 'ring-orange';
+                break;
+            case 'AWAITING_INVOICE':
+                action = 'Progressed to invoicing';
+                ringClass = 'ring-blue';
+                break;
+            case 'COMPLETED':
+                action = 'Order fully completed';
+                ringClass = 'ring-green';
+                break;
+            case 'REJECTED':
+                action = 'Order was rejected';
+                ringClass = 'ring-red';
+                break;
         }
+
+        // Handle Overdue status for ring
+        const isActuallyOverdue = o.is_delivery_delayed || o.is_prepare_delayed || o.is_qc_delayed || o.is_shipping_delayed;
+        if (isActuallyOverdue && !['DRAFT', 'REJECTED', 'COMPLETED'].includes(o.status)) {
+            ringClass = 'ring-red';
+            action = 'Flagged as overdue';
+        }
+
+        // Capitalize name helper
+        const capitalize = s => s ? s.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ') : 'Client';
+        const displayCustomer = capitalize(o.customer_name);
 
         return `
             <li>
                 <div class="timeline-ring ${ringClass}"></div>
                 <div class="timeline-content">
                     <div class="timeline-header">
-                        <strong>${action} ${mapStatus(o.status)}</strong>
+                        <strong>${action}</strong>
                         <span>${getTimeAgo(o.updated_at || o.created_at)}</span>
                     </div>
-                    <p>Order #${o.order_code || o.id} - ${o.customer_name || 'Client'}</p>
+                    <p>Order #${o.order_code || o.id} - ${displayCustomer}</p>
                 </div>
             </li>
         `;
@@ -359,7 +399,7 @@ function getTimeAgo(dateStr) {
     const now = new Date();
     const diffMs = now - date;
     const diffMin = Math.floor(diffMs / 60000);
-    
+
     if (diffMin < 1) return 'Just now';
     if (diffMin < 60) return `${diffMin}m ago`;
     const diffHr = Math.floor(diffMin / 60);

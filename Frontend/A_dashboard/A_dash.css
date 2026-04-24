@@ -272,6 +272,10 @@
 .ring-blue { border-color: #1890ff; }
 .ring-red { border-color: #cf1322; }
 .ring-gray { border-color: #d9d9d9; }
+.ring-green { border-color: #52c41a; }
+.ring-yellow { border-color: #fadb14; }
+.ring-purple { border-color: #722ed1; }
+.ring-orange { border-color: #fa8c16; }
 
 .timeline-content {
     flex: 1;

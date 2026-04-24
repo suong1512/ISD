@@ -94,7 +94,7 @@
             // Setup User Dropdown
             const avatar = document.getElementById('avatarTrigger');
             const dropdown = document.getElementById('userDropdown');
-            if(avatar && dropdown) {
+            if (avatar && dropdown) {
                 avatar.addEventListener('click', function (e) {
                     e.stopPropagation();
                     dropdown.classList.toggle('active');
@@ -116,7 +116,9 @@
             if (fullName && dropdownName) dropdownName.innerText = fullName;
         });
     </script>
+    <footer class="main-footer">
+        <p>&copy; 2025 Order Management System. All rights reserved.</p>
+    </footer>
 </body>
 
 </html>
-

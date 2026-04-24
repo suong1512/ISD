@@ -158,6 +158,21 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
         }
 
+        const submitBtn = document.querySelector('button[type="submit"]');
+        const draftBtn = document.querySelector('.btn-draft');
+
+        // Disable buttons to prevent double submission
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.dataset.originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        }
+        if (draftBtn) {
+            draftBtn.disabled = true;
+            draftBtn.dataset.originalText = draftBtn.innerHTML;
+            draftBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        }
+
         const orderData = getOrderData();
 
         try {
@@ -182,21 +197,24 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             const orderId = result.data?.id || editId;
 
-            // Upload file nếu có
+            // Upload file nếu có - thực hiện việc upload song song hoặc thông báo sau
             const fileCust = fileCustInput.files[0];
             if (fileCust && orderId) {
+                // Hiển thị trạng thái đang upload nếu cần, ở đây ta cứ chờ nhưng có thể tách thông báo
+                if (submitBtn) submitBtn.innerHTML = '<i class="fas fa-cloud-upload-alt fa-flip"></i> Uploading...';
                 try {
                     await apiUploadFile(`/orders/${orderId}/attachments`, fileCust, 'CUSTOMER');
                 } catch (uploadErr) {
                     console.error('File upload failed:', uploadErr);
-                    // Không block flow nếu upload lỗi
+                    // Không block flow chính nếu upload lỗi
                 }
             }
 
-            alert(isDraft ? "Draft saved!" : "Order created!");
+            // Hiển thị thông báo ngay khi các bước quan trọng hoàn tất
+            alert(isDraft ? "Draft saved successfully!" : "Order created successfully!");
             
             const authUser = JSON.parse(localStorage.getItem('authUser')) || {};
-            // Nếu là edit và là ADMIN -> về order list. Còn lại (Sale, hoặc create mới) -> về Sale Task
+            // Điều hướng ngay lập tức
             if (editId && authUser.role === 'ADMIN') {
                 window.location.href = "../list/O_list.html";
             } else {
@@ -206,7 +224,18 @@ document.addEventListener('DOMContentLoaded', async function () {
         } catch (error) {
             console.error('Save order error:', error);
             alert("Error: " + error.message);
+            
+            // Re-enable buttons on error
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = submitBtn.dataset.originalText || 'Submit Order';
+            }
+            if (draftBtn) {
+                draftBtn.disabled = false;
+                draftBtn.innerHTML = draftBtn.dataset.originalText || 'Save Draft';
+            }
         }
+
     }
 
     // Gán sự kiện submit

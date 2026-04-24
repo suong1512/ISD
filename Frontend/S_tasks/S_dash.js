@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             } else if (order.status === 'CONFIRMED') {
                 isActuallyOverdue = !!order.is_prepare_delayed;
             }
-            
+
             let displayStatus = mapStatus(order.status);
             if (isActuallyOverdue) {
                 displayStatus = 'Overdue';
