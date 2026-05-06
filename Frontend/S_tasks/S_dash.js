@@ -7,13 +7,12 @@
 function getStatusClass(status) {
     const s = (status || "").toLowerCase();
     if (s.includes("awaiting approval")) return "badge-urgent";
-    if (s.includes("qc checked")) return "badge-purple";
+    if (s.includes("qc checking") || s.includes("qc checked")) return "badge-purple";
     if (s.includes("awaiting invoice")) return "badge-lime";
     if (s.includes("rejected")) return "badge-danger";
-    if (s.includes("confirmed") || s.includes("completed")) return "badge-success";
-    if (s.includes("prepared") || s.includes("prepare")) return "badge-info";
+    if (s.includes("completed")) return "badge-success";
+    if (s.includes("preparing") || s.includes("prepare")) return "badge-info";
     if (s.includes("shipping")) return "badge-orange";
-    if (s.includes("overdue")) return "badge-danger";
     return "badge-neutral";
 }
 
@@ -41,7 +40,7 @@ function formatDate(dateStr) {
 }
 
 // Sale-relevant statuses (backend enum values)
-const SALE_STATUSES = ['DRAFT', 'AWAITING_APPROVAL', 'REJECTED', 'CONFIRMED'];
+const SALE_STATUSES = ['DRAFT', 'AWAITING_APPROVAL', 'REJECTED', 'PREPARING'];
 
 document.addEventListener('DOMContentLoaded', async function () {
     const avatar = document.getElementById('avatarTrigger');
@@ -101,15 +100,10 @@ document.addEventListener('DOMContentLoaded', async function () {
         const allFetched = orders;
         document.getElementById('countDraft').textContent = allFetched.filter(o => o.status === 'DRAFT').length;
         document.getElementById('countAwaiting').textContent = allFetched.filter(o => o.status === 'AWAITING_APPROVAL').length;
-        document.getElementById('countConfirmed').textContent = allFetched.filter(o => o.status === 'CONFIRMED').length;
+        document.getElementById('countPreparing').textContent = allFetched.filter(o => o.status === 'PREPARING').length;
         document.getElementById('countRejected').textContent = allFetched.filter(o => o.status === 'REJECTED').length;
 
-        // Count overdue: orders that have any sale-relevant delay flag set AND are not Draft/Rejected
-        const overdueCount = allFetched.filter(o =>
-            (o.is_delivery_delayed || o.is_prepare_delayed)
-            && o.status !== 'DRAFT' && o.status !== 'REJECTED'
-        ).length;
-        document.getElementById('countOverdue').textContent = overdueCount;
+
     }
 
     function renderOrders() {
@@ -149,7 +143,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                         isDelayed = order.is_delivery_delayed;
                     }
                     break;
-                case 'CONFIRMED':
                 case 'PREPARING':
                     relevantDeadline = order.prepare_deadline;
                     isDelayed = order.is_prepare_delayed;
@@ -174,12 +167,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             if (orderPriority !== 'None') {
                 if (isDelayed) {
-                    orderPriority = 'High';
+                    orderPriority = 'Overdue';
                 } else if (relevantDeadline) {
                     const deadlineDate = new Date(relevantDeadline);
                     const diffDays = Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
-                    if (diffDays < 0) orderPriority = 'High';
-                    else if (diffDays <= 3) orderPriority = 'High';
+                    if (diffDays <= 3) orderPriority = 'High';
                     else if (diffDays <= 7) orderPriority = 'Medium';
                     else orderPriority = 'Low';
                 } else {
@@ -202,7 +194,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 } else {
                     isOverdue = !!order.is_delivery_delayed;
                 }
-            } else if (order.status === 'CONFIRMED') {
+            } else if (order.status === 'PREPARING') {
                 isOverdue = !!order.is_prepare_delayed;
             }
 
@@ -242,17 +234,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         filteredOrders.forEach(order => {
             // Only sale-relevant delay flags per status
-            let isActuallyOverdue = false;
-            if (order.status === 'AWAITING_APPROVAL') {
-                isActuallyOverdue = !!order.is_delivery_delayed;
-            } else if (order.status === 'CONFIRMED') {
-                isActuallyOverdue = !!order.is_prepare_delayed;
-            }
-
             let displayStatus = mapStatus(order.status);
-            if (isActuallyOverdue) {
-                displayStatus = 'Overdue';
-            }
+            if (displayStatus === 'QC Checked') displayStatus = 'QC Checking';
             const statusClass = getStatusClass(displayStatus);
             const itemCount = `${order.item_count || 0} Items`;
             const priorityClass = order.displayPriority.toLowerCase();

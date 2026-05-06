@@ -73,13 +73,7 @@
 
         <!-- Status summary cards -->
         <section class="task-summary" id="taskSummary">
-            <div class="summary-card" data-status="Prepared">
-                <div class="summary-icon prepared"><i class="fas fa-box"></i></div>
-                <div class="summary-info">
-                    <span class="summary-count" id="countPreparing">0</span>
-                    <span class="summary-label">Prepared</span>
-                </div>
-            </div>
+
             <div class="summary-card" data-status="QC Checked">
                 <div class="summary-icon awaiting"><i class="fas fa-search"></i></div>
                 <div class="summary-info">
@@ -94,13 +88,7 @@
                     <span class="summary-label">Shipping</span>
                 </div>
             </div>
-            <div class="summary-card" data-status="Overdue">
-                <div class="summary-icon overdue"><i class="fas fa-exclamation-triangle"></i></div>
-                <div class="summary-info">
-                    <span class="summary-count" id="countOverdue">0</span>
-                    <span class="summary-label">Overdue</span>
-                </div>
-            </div>
+
         </section>
 
         <main class="order-table-container">
@@ -114,7 +102,7 @@
                     <label>Status:</label>
                     <select id="statusFilter">
                         <option value="All">All</option>
-                        <option value="Prepared">Prepared</option>
+
                         <option value="QC Checked">QC</option>
                         <option value="Shipping">Shipping</option>
                         <option value="Overdue">Overdue</option>
@@ -125,6 +113,7 @@
                     <label>Priority:</label>
                     <select id="priorityFilter">
                         <option value="All">All</option>
+                        <option value="Overdue">Overdue</option>
                         <option value="High">High</option>
                         <option value="Medium">Medium</option>
                         <option value="Low">Low</option>

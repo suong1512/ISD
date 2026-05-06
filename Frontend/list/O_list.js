@@ -2,13 +2,12 @@
 function getStatusClass(status) {
     const s = (status || "").toLowerCase();
     if (s.includes("awaiting approval")) return "badge-urgent";
-    if (s.includes("qc checked")) return "badge-purple";
+    if (s.includes("qc checking") || s.includes("qc checked")) return "badge-purple";
     if (s.includes("awaiting invoice")) return "badge-lime";
     if (s.includes("rejected")) return "badge-danger";
-    if (s.includes("confirmed") || s.includes("completed")) return "badge-success";
-    if (s.includes("prepared") || s.includes("prepare")) return "badge-info";
+    if (s.includes("completed")) return "badge-success";
+    if (s.includes("preparing") || s.includes("prepare")) return "badge-info";
     if (s.includes("shipping")) return "badge-orange";
-    if (s.includes("overdue")) return "badge-danger";
     return "badge-neutral";
 }
 
@@ -155,7 +154,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                         isDelayed = order.is_delivery_delayed;
                     }
                     break;
-                case 'CONFIRMED':
                 case 'PREPARING':
                     relevantDeadline = order.prepare_deadline;
                     isDelayed = order.is_prepare_delayed;
@@ -179,32 +177,29 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             if (orderPriority !== 'None') {
                 if (isDelayed) {
-                // Backend already flagged this task as overdue
-                orderPriority = 'High';
-            } else if (relevantDeadline) {
-                const deadlineDate = new Date(relevantDeadline);
-                const diffTime = deadlineDate - today;
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    orderPriority = 'Overdue';
+                } else if (relevantDeadline) {
+                    const deadlineDate = new Date(relevantDeadline);
+                    const diffTime = deadlineDate - today;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-                if (diffDays < 0) {
-                    orderPriority = 'High';
-                } else if (diffDays <= 3) {
-                    orderPriority = 'High';
-                } else if (diffDays <= 7) {
-                    orderPriority = 'Medium';
-                } else {
-                    orderPriority = 'Low';
+                    if (diffDays <= 3) {
+                        orderPriority = 'High';
+                    } else if (diffDays <= 7) {
+                        orderPriority = 'Medium';
+                    } else {
+                        orderPriority = 'Low';
+                    }
                 }
-            }
             }
 
             // --- Determine Department ---
             let orderDept = 'Sales';
             if (displayStatus === 'Completed' || displayStatus === 'Rejected') {
                 orderDept = 'None';
-            } else if (displayStatus === 'Awaiting Approval' || displayStatus === 'Confirmed') {
+            } else if (displayStatus === 'Awaiting Approval' || displayStatus === 'Preparing') {
                 orderDept = 'Sales';
-            } else if (displayStatus === 'Prepared' || displayStatus === 'QC Checked' || displayStatus === 'Shipping' || displayStatus === 'Overdue') {
+            } else if (displayStatus === 'QC Checking' || displayStatus === 'Shipping') {
                 orderDept = 'Tech';
             } else if (displayStatus === 'Awaiting Invoice') {
                 orderDept = 'Account';
@@ -259,9 +254,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                              order.is_shipping_delayed || order.is_delivery_delayed;
             
             let displayStatus = mapStatus(order.status);
-            if (isOverdue && order.status !== 'DRAFT' && order.status !== 'REJECTED' && order.status !== 'COMPLETED') {
-                displayStatus = 'Overdue';
-            }
+            if (displayStatus === 'QC Checked') displayStatus = 'QC Checking';
             const statusClass = getStatusClass(displayStatus);
             const itemCount = `${order.item_count || 0} Items`;
 

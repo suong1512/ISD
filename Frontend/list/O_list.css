@@ -164,8 +164,14 @@
 
 /* Priority */
 .priority-high {
+    background-color: #fff7e6;
+    color: #e65100;
+    border: 1px solid #ffd591;
+}
+
+.priority-overdue {
     background-color: #fff1f0;
-    color: #cf1322;
+    color: #d32f2f;
     border: 1px solid #ffa39e;
 }
 

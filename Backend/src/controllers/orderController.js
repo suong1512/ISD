@@ -272,7 +272,7 @@ async function prepareOrder(req, res) {
       return res.status(404).json({ message: error.message });
     }
 
-    if (error.message.includes('CONFIRMED')) {
+    if (error.message.includes('PREPARING')) {
       return res.status(400).json({ message: error.message });
     }
 
@@ -300,7 +300,7 @@ async function qcOrder(req, res) {
       return res.status(404).json({ message: error.message });
     }
 
-    if (error.message.includes('PREPARING')) {
+    if (error.message.includes('QC')) {
       return res.status(400).json({ message: error.message });
     }
 
@@ -328,7 +328,7 @@ async function shipOrder(req, res) {
       return res.status(404).json({ message: error.message });
     }
 
-    if (error.message.includes('QC')) {
+    if (error.message.includes('SHIPPING')) {
       return res.status(400).json({ message: error.message });
     }
 

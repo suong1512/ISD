@@ -179,9 +179,9 @@
                 </div>
 
                 <!-- Recent Activity -->
-                <div class="card activity-card" style="margin-bottom: 0;">
+                <div class="card activity-card" style="margin-bottom: 0; display: flex; flex-direction: column; height: 100%;">
                     <h2 style="margin-bottom: 15px; font-size: 16px; display: flex; align-items: baseline; justify-content: space-between;">Recent Activity <span style="font-size: 12px; color: #999; font-weight: normal;">(Last 3 Days)</span></h2>
-                    <ul class="activity-timeline" id="activityHistory">
+                    <ul class="activity-timeline" id="activityHistory" style="flex: 1;">
                         <!-- Loaded from JS -->
                     </ul>
                     <button id="btnViewLogs" class="btn btn-outline" style="width: 100%; margin-top: 15px;">View All Logs</button>
@@ -263,18 +263,14 @@
             if (!counts) return;
             
             const rawData = [
-                { name: 'Awaiting', count: counts['Awaiting Approval'], color: '#f9a825' },
-                { name: 'Confirmed', count: counts['Confirmed'], color: '#2e7d32' },
-                { name: 'Prepared', count: counts['Prepared'], color: '#1976d2' },
-                { name: 'QC', count: counts['QC Checked'], color: '#7b1fa2' },
-                { name: 'Shipping', count: counts['Shipping'], color: '#ef6c00' },
-                { name: 'Invoice', count: counts['Awaiting Invoice'], color: '#cddc39' },
-                { name: 'Done', count: counts['Completed'], color: '#1b5e20' },
-                { name: 'Rejected', count: counts['Rejected'], color: '#c62828' },
-                { name: 'Overdue', count: counts['Overdue'], color: '#d32f2f' }
+                { name: 'Awaiting', count: counts['Awaiting Approval'] || 0, color: '#f9a825' },
+                { name: 'Preparing', count: counts['Preparing'] || 0, color: '#1976d2' },
+                { name: 'QC Checking', count: counts['QC Checking'] || 0, color: '#7b1fa2' },
+                { name: 'Shipping', count: counts['Shipping'] || 0, color: '#ef6c00' },
+                { name: 'Invoice', count: counts['Awaiting Invoice'] || 0, color: '#cddc39' },
+                { name: 'Done', count: counts['Completed'] || 0, color: '#1b5e20' },
+                { name: 'Rejected', count: counts['Rejected'] || 0, color: '#c62828' }
             ];
-
-            const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
             const ChartEl = () => (
                 <ResponsiveContainer width="100%" height={220}>
@@ -321,8 +317,8 @@
 
             const data = [
                 { name: 'Approval', days: parseFloat(bottleneck.approval), color: '#f9a825' },
-                { name: 'Prepare', days: parseFloat(bottleneck.prepare), color: '#1976d2' },
-                { name: 'QC', days: parseFloat(bottleneck.qc), color: '#7b1fa2' },
+                { name: 'Preparing', days: parseFloat(bottleneck.prepare), color: '#1976d2' },
+                { name: 'QC Checking', days: parseFloat(bottleneck.qc), color: '#7b1fa2' },
                 { name: 'Shipping', days: parseFloat(bottleneck.shipping), color: '#ef6c00' },
                 { name: 'Invoicing', days: parseFloat(bottleneck.invoicing), color: '#2e7d32' }
             ];

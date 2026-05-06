@@ -582,7 +582,7 @@ async function confirmOrder(orderId, confirmedBy) {
     await connection.query(
       `
       UPDATE orders
-      SET status = 'CONFIRMED',
+      SET status = 'PREPARING',
           confirmed_by = ?,
           confirmed_at = NOW(),
           updated_at = NOW()
@@ -856,13 +856,13 @@ async function prepareOrder(orderId, confirmedBy) {
       throw new Error('Order not found');
     }
 
-    if (orderRows[0].status !== 'CONFIRMED') {
-      throw new Error('Only orders in CONFIRMED status can be marked as Prepared');
+    if (orderRows[0].status !== 'PREPARING') {
+      throw new Error('Only orders in PREPARING status can be marked as Prepared');
     }
 
     await connection.query(
       `UPDATE orders
-       SET status = 'PREPARING',
+       SET status = 'QC',
            prepare_completed_at = NOW(),
            updated_at = NOW()
        WHERE id = ?`,
@@ -894,8 +894,8 @@ async function qcOrder(orderId, confirmedBy) {
       throw new Error('Order not found');
     }
 
-    if (orderRows[0].status !== 'PREPARING') {
-      throw new Error('Only orders in PREPARING status can be QC checked');
+    if (orderRows[0].status !== 'QC') {
+      throw new Error('Only orders in QC status can be QC checked');
     }
 
     await connection.query(
@@ -1042,7 +1042,6 @@ async function getDashboardStats() {
 
   const statusCounts = {
     'AWAITING_APPROVAL': 0,
-    'CONFIRMED': 0,
     'PREPARING': 0,
     'QC': 0,
     'SHIPPING': 0,
@@ -1058,7 +1057,7 @@ async function getDashboardStats() {
   });
 
   // 2. Active Orders = All statuses except COMPLETED and REJECTED
-  const activeOrders = statusCounts['AWAITING_APPROVAL'] + statusCounts['CONFIRMED'] +
+  const activeOrders = statusCounts['AWAITING_APPROVAL'] +
                        statusCounts['PREPARING'] + statusCounts['QC'] +
                        statusCounts['SHIPPING'] + statusCounts['AWAITING_INVOICE'];
 
@@ -1101,7 +1100,7 @@ async function getDashboardStats() {
 
   // 6. Workload distribution by department (only active orders, COMPLETED/REJECTED = None)
   const workload = {
-    Sales: statusCounts['AWAITING_APPROVAL'] + statusCounts['CONFIRMED'],
+    Sales: statusCounts['AWAITING_APPROVAL'],
     Technical: statusCounts['PREPARING'] + statusCounts['QC'] + statusCounts['SHIPPING'],
     Accountant: statusCounts['AWAITING_INVOICE']
   };
@@ -1193,15 +1192,13 @@ async function getDashboardStats() {
       avgCycleTime
     },
     statusCounts: {
-      'Awaiting Approval': statusCounts['AWAITING_APPROVAL'],
-      'Confirmed': statusCounts['CONFIRMED'],
-      'Prepared': statusCounts['PREPARING'],
-      'QC Checked': statusCounts['QC'],
-      'Shipping': statusCounts['SHIPPING'],
-      'Awaiting Invoice': statusCounts['AWAITING_INVOICE'],
-      'Completed': statusCounts['COMPLETED'],
-      'Rejected': statusCounts['REJECTED'],
-      'Overdue': overdueCount
+      'Awaiting Approval': statusCounts['AWAITING_APPROVAL'] || 0,
+      'Preparing': statusCounts['PREPARING'] || 0,
+      'QC Checking': statusCounts['QC'] || 0,
+      'Shipping': statusCounts['SHIPPING'] || 0,
+      'Awaiting Invoice': statusCounts['AWAITING_INVOICE'] || 0,
+      'Completed': statusCounts['COMPLETED'] || 0,
+      'Rejected': statusCounts['REJECTED'] || 0
     },
     workload,
     bottleneck,

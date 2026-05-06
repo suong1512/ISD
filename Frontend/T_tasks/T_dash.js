@@ -6,13 +6,11 @@
 function getStatusClass(status) {
     const s = (status || "").toLowerCase();
     if (s.includes("awaiting approval")) return "badge-urgent";
-    if (s.includes("qc checked") || s === "qc") return "badge-purple";
-    if (s.includes("awaiting invoice")) return "badge-lime";
-    if (s.includes("rejected")) return "badge-danger";
-    if (s.includes("confirmed") || s.includes("completed")) return "badge-success";
-    if (s.includes("prepared") || s.includes("prepare") || s === "preparing") return "badge-info";
+    if (s.includes("qc checking") || s === "qc") return "badge-purple";
+    if (s.includes("completed")) return "badge-success";
+    if (s.includes("preparing") || s.includes("prepare") || s === "preparing") return "badge-info";
     if (s.includes("shipping")) return "badge-orange";
-    if (s.includes("overdue")) return "badge-danger";
+    return "badge-neutral";
     return "badge-neutral";
 }
 
@@ -35,7 +33,7 @@ function formatDate(dateStr) {
     return `${year}-${month}-${day}`;
 }
 
-const TECH_STATUSES = ['PREPARING', 'QC', 'SHIPPING'];
+const TECH_STATUSES = ['QC', 'SHIPPING'];
 
 document.addEventListener('DOMContentLoaded', async function () {
     const avatar = document.getElementById('avatarTrigger');
@@ -93,17 +91,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     function updateSummaryCards(orders) {
         const allFetched = orders;
-        document.getElementById('countPreparing').textContent = allFetched.filter(o => o.status === 'PREPARING').length;
         document.getElementById('countQc').textContent = allFetched.filter(o => o.status === 'QC').length;
         document.getElementById('countShipping').textContent = allFetched.filter(o => o.status === 'SHIPPING').length;
 
-        // Count overdue
-        const overdueCount = allFetched.filter(o =>
-            (o.status === 'PREPARING' && o.is_prepare_delayed) ||
-            (o.status === 'QC' && o.is_qc_delayed) ||
-            (o.status === 'SHIPPING' && o.is_shipping_delayed)
-        ).length;
-        document.getElementById('countOverdue').textContent = overdueCount;
+
     }
 
     function renderOrders() {
@@ -166,12 +157,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             if (orderPriority !== 'None') {
                 if (isDelayed) {
-                    orderPriority = 'High';
+                    orderPriority = 'Overdue';
                 } else if (relevantDeadline) {
                     const deadlineDate = new Date(relevantDeadline);
                     const diffDays = Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
-                    if (diffDays < 0) orderPriority = 'High';
-                    else if (diffDays <= 3) orderPriority = 'High';
+                    if (diffDays <= 3) orderPriority = 'High';
                     else if (diffDays <= 7) orderPriority = 'Medium';
                     else orderPriority = 'Low';
                 } else {
@@ -183,9 +173,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             order.displayDeadline = relevantDeadline;
 
             // Check overdue
-            const isOverdue = (order.status === 'PREPARING' && order.is_prepare_delayed) ||
-                              (order.status === 'QC' && order.is_qc_delayed) ||
-                              (order.status === 'SHIPPING' && order.is_shipping_delayed);
+            const isOverdue = (order.status === 'QC' && order.is_qc_delayed) || (order.status === 'SHIPPING' && order.is_shipping_delayed);
 
             // Status matching
             let matchesStatus = true;
@@ -220,15 +208,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         filteredOrders.forEach(order => {
             // Only check tech-relevant delay flags for Overdue display
-            const isActuallyOverdue =
-                (order.status === 'PREPARING' && order.is_prepare_delayed) ||
-                (order.status === 'QC' && order.is_qc_delayed) ||
-                (order.status === 'SHIPPING' && order.is_shipping_delayed);
-            
             let displayStatus = mapStatus(order.status);
-            if (isActuallyOverdue) {
-                displayStatus = 'Overdue';
-            }
+            if (displayStatus === 'QC Checked') displayStatus = 'QC Checking';
             const statusClass = getStatusClass(displayStatus);
             const itemCount = `${order.item_count || 0} Items`;
             const priorityClass = order.displayPriority.toLowerCase();

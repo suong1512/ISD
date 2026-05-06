@@ -90,11 +90,11 @@
                     <span class="summary-label">Awaiting</span>
                 </div>
             </div>
-            <div class="summary-card" data-status="Confirmed">
-                <div class="summary-icon confirmed"><i class="fas fa-check-circle"></i></div>
+            <div class="summary-card" data-status="Preparing">
+                <div class="summary-icon prepared"><i class="fas fa-hammer"></i></div>
                 <div class="summary-info">
-                    <span class="summary-count" id="countConfirmed">0</span>
-                    <span class="summary-label">Confirmed</span>
+                    <span class="summary-count" id="countPreparing">0</span>
+                    <span class="summary-label">Preparing</span>
                 </div>
             </div>
 
@@ -105,13 +105,7 @@
                     <span class="summary-label">Rejected</span>
                 </div>
             </div>
-            <div class="summary-card" data-status="Overdue">
-                <div class="summary-icon overdue"><i class="fas fa-exclamation-triangle"></i></div>
-                <div class="summary-info">
-                    <span class="summary-count" id="countOverdue">0</span>
-                    <span class="summary-label">Overdue</span>
-                </div>
-            </div>
+
         </section>
 
         <main class="order-table-container">
@@ -128,7 +122,7 @@
                         <option value="Draft">Draft</option>
                         <option value="Awaiting Approval">Awaiting Approval</option>
                         <option value="Rejected">Rejected</option>
-                        <option value="Confirmed">Confirmed</option>
+                        <option value="Preparing">Preparing</option>
                         <option value="Overdue">Overdue</option>
                     </select>
                 </div>
@@ -137,6 +131,7 @@
                     <label>Priority:</label>
                     <select id="priorityFilter">
                         <option value="All">All</option>
+                        <option value="Overdue">Overdue</option>
                         <option value="High">High</option>
                         <option value="Medium">Medium</option>
                         <option value="Low">Low</option>

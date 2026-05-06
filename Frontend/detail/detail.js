@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     // 6. Trạng thái và Timeline
     const displayStatus = mapStatus(currentOrder.status);
     renderStatusBadge(displayStatus);
-    updateTimeline(displayStatus);
+    updateTimeline(currentOrder.status);
     renderTaskPanel(currentOrder);
     renderOrderTimeline(currentOrder);
     renderNotes(currentOrder.notes);
@@ -179,7 +179,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 
                 if (response.data.success) {
                     noteInput.value = '';
-                    renderNotes(response.data.notes);
+                    await showCustomAlert('Note added successfully', 'Success', 'success');
+                    window.location.reload();
                 }
             } catch (e) {
                 showCustomAlert('Failed to add note: ' + e.message);
@@ -334,8 +335,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         try {
             await apiUploadFile(`/orders/${orderId}/attachments`, file, 'SUPPLIER');
-            showCustomAlert(`Uploaded: ${file.name} to Order #${currentOrder.order_code}`);
-            window.pendingReload = true;
+            await showCustomAlert(`Uploaded: ${file.name} to Order #${currentOrder.order_code}`, 'Success', 'success');
+            window.location.reload();
         } catch (error) {
             console.error('Upload failed:', error);
             showCustomAlert("Upload failed: " + error.message);
@@ -363,13 +364,12 @@ function renderStatusBadge(status) {
     const s = safeStatus.toLowerCase();
     let variant = "badge-neutral";
     if (s.includes("awaiting approval")) variant = "badge-urgent";
-    else if (s.includes("qc checked")) variant = "badge-purple";
+    else if (s.includes("qc checking") || s.includes("qc checked")) variant = "badge-purple";
     else if (s.includes("awaiting invoice")) variant = "badge-lime";
     else if (s.includes("rejected")) variant = "badge-danger";
-    else if (s.includes("confirmed") || s.includes("completed")) variant = "badge-success";
-    else if (s.includes("prepared") || s.includes("prepare")) variant = "badge-info";
+    else if (s.includes("completed")) variant = "badge-success";
+    else if (s.includes("preparing") || s.includes("prepare")) variant = "badge-info";
     else if (s.includes("shipping")) variant = "badge-orange";
-    else if (s.includes("overdue")) variant = "badge-danger";
 
     statusBadge.classList.add(variant);
     statusBadge.removeAttribute('style');
@@ -382,36 +382,35 @@ function updateTimeline(status) {
 
     let htmlStepIndex = 0;
 
-    switch (status) {
-        case 'Draft':
-            htmlStepIndex = 0; // Create active
+    const s = (status || "").toUpperCase();
+
+    switch (s) {
+        case 'DRAFT':
+            htmlStepIndex = 0;
             break;
-        case 'Awaiting Approval':
-            htmlStepIndex = 1; // Approval active
+        case 'AWAITING_APPROVAL':
+        case 'AWAITING APPROVAL':
+        case 'REJECTED':
+            htmlStepIndex = 1;
             break;
-        case 'Rejected':
-            htmlStepIndex = 1; // Stayed at Approval, blocked
-            break;
-        case 'Confirmed':
-            htmlStepIndex = 2; // Prepare active
-            break;
-        case 'Prepared':
-            htmlStepIndex = 3; // QC active (Prepare is done)
+        case 'PREPARING':
+        case 'PREPARE':
+            htmlStepIndex = 2;
             break;
         case 'QC':
-            htmlStepIndex = 3; // QC active (still in QC)
+        case 'QC CHECKING':
+        case 'QC_CHECKING':
+            htmlStepIndex = 3;
             break;
-        case 'QC Checked':
-            htmlStepIndex = 4; // Shipping active (QC is done)
+        case 'SHIPPING':
+            htmlStepIndex = 4;
             break;
-        case 'Shipping':
-            htmlStepIndex = 4; // Shipping active
+        case 'AWAITING_INVOICE':
+        case 'AWAITING INVOICE':
+            htmlStepIndex = 5;
             break;
-        case 'Awaiting Invoice':
-            htmlStepIndex = 5; // Done active (Waiting for invoice to finish the whole process)
-            break;
-        case 'Completed':
-            htmlStepIndex = 6; // All steps completed
+        case 'COMPLETED':
+            htmlStepIndex = 5;
             break;
         default:
             htmlStepIndex = 0;
@@ -458,14 +457,14 @@ function renderTaskPanel(order) {
                 <i class="fas fa-user-lock"></i> Verification is required to move to production.
             </div>
         `;
-    } else if (status === "Confirmed") {
+    } else if (status === "Preparing") {
         content = `
             <h2><i class="fas fa-box-open"></i> Warehouse Process</h2>
             <div class="task-info">
                 <p class="task-label">CURRENT STEP</p>
-                <h3 style="color: #2d7a5d;">Order Confirmed</h3>
-                <p>Assigned: <strong>Manufacturer / Warehouse</strong></p>
-                <p>The warehouse team has received the request and is preparing the products.</p>
+                <h3 style="color: #2d7a5d;">Preparing Order</h3>
+                <p>Assigned: <strong>Sale / Warehouse</strong></p>
+                <p>The team is preparing the products. Sale should confirm once preparation is finished.</p>
             </div>
         `;
     } else if (status === "Rejected") {
@@ -510,8 +509,8 @@ window.deleteAttachment = async function (orderId, attachmentId) {
     if (!isConfirmed) return;
     try {
         await apiDelete(`/orders/${orderId}/attachments/${attachmentId}`);
-        showCustomAlert('File deleted successfully');
-        window.pendingReload = true;
+        await showCustomAlert('File deleted successfully', 'Success', 'success');
+        window.location.reload();
     } catch (e) {
         showCustomAlert('Could not delete file: ' + e.message);
     }
@@ -524,8 +523,8 @@ window.deleteNote = async function (index) {
         const orderId = sessionStorage.getItem('currentOrderId');
         const response = await apiDelete(`/orders/${orderId}/notes/${index}`);
         if (response.data.success) {
-            showCustomAlert('Note deleted successfully');
-            window.pendingReload = true;
+            await showCustomAlert('Note deleted successfully', 'Success', 'success');
+            window.location.reload();
         }
     } catch (e) {
         showCustomAlert('Could not delete note: ' + e.message);
@@ -580,13 +579,13 @@ function renderOrderTimeline(order) {
             label: 'Order Confirmed',
             desc: 'by Admin 01',
             ring: 'ring-blue',
-            condition: ['CONFIRMED','PREPARING','QC','SHIPPING','AWAITING_INVOICE','COMPLETED'].includes(order.status)
+            condition: ['PREPARING','QC','SHIPPING','AWAITING_INVOICE','COMPLETED'].includes(order.status)
         },
         {
             orderIndex: 4,
             key: 'prepare_completed_at',
             label: 'Preparation Complete',
-            desc: 'by Tech Staff 01',
+            desc: 'by Sale Staff 01',
             ring: 'ring-blue',
             condition: ['QC','SHIPPING','AWAITING_INVOICE','COMPLETED'].includes(order.status)
         },

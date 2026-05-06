@@ -7,7 +7,6 @@ function getStatusClass(status) {
     const s = (status || "").toLowerCase();
     if (s.includes("awaiting invoice")) return "badge-lime";
     if (s.includes("completed")) return "badge-success";
-    if (s.includes("overdue")) return "badge-danger";
     return "badge-neutral";
 }
 
@@ -90,11 +89,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         document.getElementById('countAwaitingInvoice').textContent = orders.filter(o => o.status === 'AWAITING_INVOICE').length;
         document.getElementById('countCompleted').textContent = orders.filter(o => o.status === 'COMPLETED').length;
 
-        // Count overdue: only delivery delays for accountant-relevant orders
-        const overdueCount = orders.filter(o =>
-            o.is_delivery_delayed && o.status === 'AWAITING_INVOICE'
-        ).length;
-        document.getElementById('countOverdue').textContent = overdueCount;
+
     }
 
     function renderOrders() {
@@ -157,12 +152,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             if (orderPriority !== 'None') {
                 if (isDelayed) {
-                    orderPriority = 'High';
+                    orderPriority = 'Overdue';
                 } else if (relevantDeadline) {
                     const deadlineDate = new Date(relevantDeadline);
                     const diffDays = Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
-                    if (diffDays < 0) orderPriority = 'High';
-                    else if (diffDays <= 3) orderPriority = 'High';
+                    if (diffDays <= 3) orderPriority = 'High';
                     else if (diffDays <= 7) orderPriority = 'Medium';
                     else orderPriority = 'Low';
                 } else {
@@ -209,8 +203,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         filteredOrders.forEach(order => {
             // Only check accountant-relevant delay: delivery delay on AWAITING_INVOICE
-            const isActuallyOverdue = order.is_delivery_delayed && order.status === 'AWAITING_INVOICE';
-            const displayStatus = isActuallyOverdue ? 'Overdue' : mapStatus(order.status);
+            const displayStatus = mapStatus(order.status);
+            if (displayStatus === 'QC Checked') displayStatus = 'QC Checking';
             const statusClass = getStatusClass(displayStatus);
             const itemCount = `${order.item_count || 0} Items`;
             const priorityClass = order.displayPriority.toLowerCase();

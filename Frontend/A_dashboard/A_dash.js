@@ -121,20 +121,18 @@ function renderDashboard(stats) {
     // === Alerts (Đề xuất 4: Red for overdue, Yellow for high priority) ===
     renderAlerts(stats.alerts);
 
-    // === Recent Activity ===
-    renderActivity(stats.activity);
+    // === Recent Activity (Pass alerts count to align heights) ===
+    renderActivity(stats.activity, stats.alerts.length);
 }
 
 
 // Colors mapping
 const STATUS_COLORS = {
-    'confirmed': '#2e7d32',
     'awaiting approval': '#f9a825',
-    'prepared': '#1976d2',
-    'qc checked': '#7b1fa2',
+    'preparing': '#1976d2',
+    'qc checking': '#7b1fa2',
     'shipping': '#ef6c00',
     'awaiting invoice': '#cddc39',
-    'overdue': '#d32f2f',
     'rejected': '#c62828',
     'completed': '#1b5e20'
 };
@@ -170,21 +168,30 @@ function renderAlerts(alerts) {
         let level = isOverdue ? 'danger-box' : 'warning-box';
 
         if (isOverdue) {
-            if (o.is_qc_delayed) type = 'QC Bottleneck';
+            if (o.is_qc_delayed) type = 'QC Checking Bottleneck';
             else if (o.is_shipping_delayed) type = 'Logistics Overdue';
             else if (o.is_delivery_delayed) type = 'Delivery Overdue';
-            else if (o.is_prepare_delayed) type = 'Preparation Overdue';
+            else if (o.is_prepare_delayed) type = 'Preparing Overdue';
         } else if (isHighOnly) {
-            type = 'High Priority — Approaching Deadline';
+            let taskType = 'Task';
+            if (o.status === 'AWAITING_APPROVAL') taskType = 'Approval';
+            else if (o.status === 'PREPARING') taskType = 'Preparing';
+            else if (o.status === 'QC') taskType = 'QC Checking';
+            else if (o.status === 'SHIPPING') taskType = 'Shipping';
+            else if (o.status === 'AWAITING_INVOICE') taskType = 'Invoicing';
+            
+            type = `${taskType} Task Approaching Deadline`;
             level = 'warning-box';
         }
+
+        const orderDisplayId = `#${o.order_code || o.id}`;
 
         return `
             <div class="alert-box ${level}">
                 <div class="alert-box-icon"><i class="fas ${icon}"></i></div>
                 <div class="alert-box-content">
                     <div class="alert-box-header">
-                        <strong>${type} - #${o.order_code || o.id}</strong>
+                        <strong>${orderDisplayId} - ${type}</strong>
                         <span>${getTimeAgo(o.updated_at)}</span>
                     </div>
                     <p>${o.customer_name || 'Customer'}</p>
@@ -199,13 +206,18 @@ function renderAlerts(alerts) {
 
 let allActivitiesGlob = [];
 let showingAllActivities = false;
+let lastAlertCountGlob = 5;
 
-function renderActivity(activities) {
+function renderActivity(activities, alertCount) {
     if (activities) allActivitiesGlob = activities;
+    if (alertCount !== undefined) lastAlertCountGlob = alertCount;
+    
     const container = document.getElementById('activityHistory');
     if (!container) return;
 
-    const showCount = showingAllActivities ? allActivitiesGlob.length : 5;
+    // Use alert count * 1.5 to match the height, minimum 3
+    const defaultCount = Math.max(3, Math.ceil(lastAlertCountGlob * 1.5));
+    const showCount = showingAllActivities ? allActivitiesGlob.length : defaultCount;
     const toRender = allActivitiesGlob.slice(0, showCount);
 
     container.innerHTML = toRender.map(o => {
@@ -214,38 +226,34 @@ function renderActivity(activities) {
 
         switch (o.status) {
             case 'DRAFT':
-                action = 'Order created as draft';
+                action = 'Sale Staff created order as draft successfully';
                 break;
             case 'AWAITING_APPROVAL':
-                action = 'Submitted for approval';
+                action = 'Sale Staff submitted order for approval successfully';
                 ringClass = 'ring-yellow';
                 break;
-            case 'CONFIRMED':
-                action = 'Order approved';
-                ringClass = 'ring-blue';
-                break;
             case 'PREPARING':
-                action = 'Moved to preparation';
+                action = 'Admin approved and moved order to preparation successfully';
                 ringClass = 'ring-blue';
                 break;
             case 'QC':
-                action = 'Transitioned to QC check';
+                action = 'Sale Staff completed preparation and moved to QC checking successfully';
                 ringClass = 'ring-purple';
                 break;
             case 'SHIPPING':
-                action = 'Dispatched for shipping';
+                action = 'Tech Staff passed QC and moved to shipping successfully';
                 ringClass = 'ring-orange';
                 break;
             case 'AWAITING_INVOICE':
-                action = 'Progressed to invoicing';
+                action = 'Tech Staff shipped order and moved to awaiting invoice successfully';
                 ringClass = 'ring-blue';
                 break;
             case 'COMPLETED':
-                action = 'Order completed';
+                action = 'Accountant Staff created and confirmed invoice successfully';
                 ringClass = 'ring-green';
                 break;
             case 'REJECTED':
-                action = 'Order was rejected';
+                action = 'Admin rejected the order back to Sales';
                 ringClass = 'ring-red';
                 break;
         }
@@ -276,14 +284,11 @@ function renderActivity(activities) {
         const isActuallyOverdue = o.is_delivery_delayed || o.is_prepare_delayed || o.is_qc_delayed || o.is_shipping_delayed;
         if (isActuallyOverdue && !['DRAFT', 'REJECTED', 'COMPLETED'].includes(o.status)) {
             ringClass = 'ring-red';
-            action = 'Flagged as overdue';
+            action = 'Order flagged as overdue by system';
             isSystemAction = true;
         }
 
         let headerLine = `Order #${o.order_code || o.id}`;
-        if (!isSystemAction) {
-            headerLine += ` - ${executorRole}`;
-        }
 
         return `
             <li>

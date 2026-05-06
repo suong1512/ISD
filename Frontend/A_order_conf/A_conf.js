@@ -122,7 +122,7 @@ async function updateStatus(orderId, action, orderCode = "") {
     try {
         if (action === 'confirm') {
             await apiPatch(`/orders/${orderId}/confirm`, { confirmed_by: JSON.parse(sessionStorage.getItem('authUser'))?.id || 2 });
-            await showCustomAlert(`Success: Order ${orderCode} is confirmed!`, 'Confirmed', 'success');
+            await showCustomAlert(`Success: Order ${orderCode} moved to Preparing!`, 'Confirmed', 'success');
         } else if (action === 'reject') {
             await apiPatch(`/orders/${orderId}/reject`, {});
             await showCustomAlert(`Notice: Order ${orderCode} is rejected.`, 'Rejected', 'info');
