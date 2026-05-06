@@ -177,3 +177,72 @@ window.showCustomConfirm = function (message, title = 'Confirm Action') {
         };
     });
 };
+
+/**
+ * Shared utility to calculate order priority and overdue status
+ * matches logic used in Order List and Admin Dashboard alerts.
+ */
+window.getOrderPriority = function(order) {
+    const today = new Date();
+    const tOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    
+    let orderPriority = 'Low';
+    let relevantDeadlineDate = null;
+    let isDelayed = false;
+
+    // Mapping logic based on status
+    switch (order.status) {
+        case 'DRAFT':
+        case 'REJECTED':
+        case 'COMPLETED':
+            return { priority: 'None', deadline: null, isOverdue: false };
+        
+        case 'AWAITING_APPROVAL':
+            if (order.prepare_deadline) {
+                const d = new Date(order.prepare_deadline);
+                d.setDate(d.getDate() + 1);
+                relevantDeadlineDate = d;
+            } else {
+                relevantDeadlineDate = order.expected_delivery_date ? new Date(order.expected_delivery_date) : null;
+            }
+            break;
+            
+        case 'PREPARING':
+            relevantDeadlineDate = order.prepare_deadline ? new Date(order.prepare_deadline) : null;
+            break;
+            
+        case 'QC':
+            relevantDeadlineDate = order.qc_deadline ? new Date(order.qc_deadline) : null;
+            break;
+            
+        case 'SHIPPING':
+            relevantDeadlineDate = order.shipping_deadline ? new Date(order.shipping_deadline) : null;
+            break;
+            
+        case 'AWAITING_INVOICE':
+            relevantDeadlineDate = order.expected_delivery_date ? new Date(order.expected_delivery_date) : null;
+            break;
+            
+        default:
+            relevantDeadlineDate = order.expected_delivery_date ? new Date(order.expected_delivery_date) : null;
+    }
+
+    if (relevantDeadlineDate) {
+        const dOnly = new Date(relevantDeadlineDate.getFullYear(), relevantDeadlineDate.getMonth(), relevantDeadlineDate.getDate());
+        if (dOnly <= tOnly) {
+            orderPriority = 'Overdue';
+            isDelayed = true;
+        } else {
+            const diffDays = Math.ceil((dOnly - tOnly) / (1000 * 60 * 60 * 24));
+            if (diffDays <= 3) orderPriority = 'High';
+            else if (diffDays <= 7) orderPriority = 'Medium';
+            else orderPriority = 'Low';
+        }
+    }
+
+    return { 
+        priority: orderPriority, 
+        deadline: relevantDeadlineDate ? relevantDeadlineDate.toISOString().split('T')[0] : null, 
+        isOverdue: isDelayed 
+    };
+};

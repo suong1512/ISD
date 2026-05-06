@@ -123,75 +123,14 @@ document.addEventListener('DOMContentLoaded', async function () {
         // Xóa toàn bộ rồi render lại
         tableBody.innerHTML = '';
 
-        const today = new Date();
-
         const filteredOrders = allOrders.filter(order => {
             const displayStatus = mapStatus(order.status);
-
-            // --- Determine Priority based on current task deadline ---
-            let orderPriority = 'Low';
-            let relevantDeadline = null;
-            let isDelayed = false;
-
-            // Mapping Task-specific deadlines based on current status
-            switch (order.status) {
-                case 'DRAFT':
-                case 'REJECTED':
-                case 'COMPLETED':
-                    orderPriority = 'None';
-                    break;
-                case 'AWAITING_APPROVAL':
-                    if (order.prepare_deadline) {
-                        const d = new Date(order.prepare_deadline);
-                        d.setDate(d.getDate() + 1);
-                        relevantDeadline = d.toISOString().split('T')[0];
-                        // Recalculate delay based on this new deadline
-                        const dOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-                        const tOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-                        isDelayed = dOnly < tOnly;
-                    } else {
-                        relevantDeadline = order.expected_delivery_date;
-                        isDelayed = order.is_delivery_delayed;
-                    }
-                    break;
-                case 'PREPARING':
-                    relevantDeadline = order.prepare_deadline;
-                    isDelayed = order.is_prepare_delayed;
-                    break;
-                case 'QC':
-                    relevantDeadline = order.qc_deadline;
-                    isDelayed = order.is_qc_delayed;
-                    break;
-                case 'SHIPPING':
-                    relevantDeadline = order.shipping_deadline;
-                    isDelayed = order.is_shipping_delayed;
-                    break;
-                case 'AWAITING_INVOICE':
-                    relevantDeadline = order.expected_delivery_date;
-                    isDelayed = order.is_delivery_delayed;
-                    break;
-                default:
-                    relevantDeadline = order.expected_delivery_date;
-                    isDelayed = order.is_delivery_delayed;
-            }
-
-            if (orderPriority !== 'None') {
-                if (isDelayed) {
-                    orderPriority = 'Overdue';
-                } else if (relevantDeadline) {
-                    const deadlineDate = new Date(relevantDeadline);
-                    const diffTime = deadlineDate - today;
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                    if (diffDays <= 3) {
-                        orderPriority = 'High';
-                    } else if (diffDays <= 7) {
-                        orderPriority = 'Medium';
-                    } else {
-                        orderPriority = 'Low';
-                    }
-                }
-            }
+            
+            // --- Determine Priority based on shared utility ---
+            const priorityInfo = getOrderPriority(order);
+            order.displayPriority = priorityInfo.priority;
+            order.displayDeadline = priorityInfo.deadline;
+            const isOverdue = priorityInfo.isOverdue;
 
             // --- Determine Department ---
             let orderDept = 'Sales';
@@ -204,14 +143,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             } else if (displayStatus === 'Awaiting Invoice') {
                 orderDept = 'Account';
             }
-            order.displayPriority = orderPriority;
+            order.displayPriority = priorityInfo.priority;
             order.displayDept = orderDept;
-            order.displayDeadline = relevantDeadline;
-
-            // Check Overdue status
-            const isOverdue = (order.is_prepare_delayed || order.is_qc_delayed ||
-                order.is_shipping_delayed || order.is_delivery_delayed) &&
-                order.status !== 'DRAFT' && order.status !== 'REJECTED' && order.status !== 'COMPLETED';
+            order.displayDeadline = priorityInfo.deadline;
 
             // Lọc dữ liệu
             let matchesStatus = true;
@@ -224,7 +158,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     matchesStatus = displayStatus === filterStatus;
                 }
             }
-            const matchesPriority = (filterPriority === "All" || orderPriority === filterPriority);
+            const matchesPriority = (filterPriority === "All" || priorityInfo.priority === filterPriority);
             const matchesDept = (filterDept === "All" || orderDept === filterDept);
 
             const orderCode = order.order_code ? String(order.order_code).toLowerCase() : "";
@@ -250,8 +184,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
         filteredOrders.forEach(order => {
-            const isOverdue = order.is_prepare_delayed || order.is_qc_delayed ||
-                             order.is_shipping_delayed || order.is_delivery_delayed;
+            const isOverdue = order.displayPriority === 'Overdue';
             
             let displayStatus = mapStatus(order.status);
             if (displayStatus === 'QC Checked') displayStatus = 'QC Checking';

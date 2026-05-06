@@ -100,8 +100,9 @@ function renderDashboard(stats) {
     const kpiActiveSub = document.getElementById('kpiActiveSub');
     kpiActiveSub.innerText = `${activePct}% active`;
     kpiActiveSub.className = 'kpi-trend text-success';
-    document.getElementById('kpiDelayed').innerText = kpi.highPriorityCount.toLocaleString();
-    document.getElementById('kpiDelayedSub').innerText = `≤ 3 days`;
+    const criticalCount = (kpi.highPriorityCount || 0) + (kpi.overdueCount || 0);
+    document.getElementById('kpiDelayed').innerText = criticalCount.toLocaleString();
+    document.getElementById('kpiDelayedSub').innerText = `${kpi.overdueCount || 0} overdue`;
     document.getElementById('kpiCycleTime').innerText = kpi.avgCycleTime;
     document.getElementById('kpiCycleSub').innerText = `days`;
 
@@ -143,9 +144,15 @@ function renderAlerts(alerts) {
     const badge = document.getElementById('liveIssuesBadge');
     if (!container) return;
 
-    badge.innerText = `${alerts.length} LIVE ISSUES`;
+    // Filter and calculate final priority for each alert using shared logic
+    const processedAlerts = alerts.map(o => {
+        const result = getOrderPriority(o);
+        return { ...o, ...result };
+    }).filter(o => o.priority === 'High' || o.priority === 'Overdue');
 
-    if (alerts.length === 0) {
+    badge.innerText = `${processedAlerts.length} LIVE ISSUES`;
+
+    if (processedAlerts.length === 0) {
         container.innerHTML = `
             <div style="background: #f9f9f9; border-radius: 8px; padding: 30px; text-align: center; border: 1px dashed #ddd;">
                 <i class="fas fa-check-circle" style="color: #52c41a; font-size: 24px; margin-bottom: 10px;"></i>
@@ -154,10 +161,9 @@ function renderAlerts(alerts) {
         return;
     }
 
-    container.innerHTML = alerts.map(o => {
-        // Determine if overdue (red) or high priority (yellow)
-        const isOverdue = o.is_delivery_delayed || o.is_qc_delayed || o.is_prepare_delayed || o.is_shipping_delayed;
-        const isHighOnly = o.is_high_priority && !isOverdue;
+    container.innerHTML = processedAlerts.map(o => {
+        const isOverdue = o.priority === 'Overdue';
+        const isHighOnly = o.priority === 'High';
 
         let type = 'Processing delay';
         let icon = 'fa-user-cog';
@@ -168,10 +174,12 @@ function renderAlerts(alerts) {
         let level = isOverdue ? 'danger-box' : 'warning-box';
 
         if (isOverdue) {
-            if (o.is_qc_delayed) type = 'QC Checking Bottleneck';
-            else if (o.is_shipping_delayed) type = 'Logistics Overdue';
-            else if (o.is_delivery_delayed) type = 'Delivery Overdue';
-            else if (o.is_prepare_delayed) type = 'Preparing Overdue';
+            if (o.status === 'QC') type = 'QC Checking Bottleneck';
+            else if (o.status === 'SHIPPING') type = 'Logistics Overdue';
+            else if (o.status === 'AWAITING_INVOICE') type = 'Invoicing Overdue';
+            else if (o.status === 'AWAITING_APPROVAL') type = 'Approval Overdue';
+            else if (o.status === 'PREPARING') type = 'Preparing Overdue';
+            else type = 'Delivery Overdue';
         } else if (isHighOnly) {
             let taskType = 'Task';
             if (o.status === 'AWAITING_APPROVAL') taskType = 'Approval';
@@ -181,7 +189,6 @@ function renderAlerts(alerts) {
             else if (o.status === 'AWAITING_INVOICE') taskType = 'Invoicing';
             
             type = `${taskType} Task Approaching Deadline`;
-            level = 'warning-box';
         }
 
         const orderDisplayId = `#${o.order_code || o.id}`;

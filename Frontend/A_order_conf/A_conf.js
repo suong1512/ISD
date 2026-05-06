@@ -33,41 +33,47 @@ async function renderAdminOrders() {
     }
 
     // Render danh sách
-    orderGrid.innerHTML = pendingOrders.map(order => `
-        <div class="order-card" id="order-${order.id}">
-            <div class="card-header">
-                <div>
-                    <span class="order-label">ORDER CODE</span>
-                    <div class="order-number">${order.order_code || '#' + order.id}</div>
+    orderGrid.innerHTML = pendingOrders.map(order => {
+        const priorityInfo = getOrderPriority(order);
+        const isOverdue = priorityInfo.isOverdue;
+        const deadlineStr = priorityInfo.deadline || '---';
+
+        return `
+            <div class="order-card" id="order-${order.id}">
+                <div class="card-header">
+                    <div>
+                        <span class="order-label">ORDER CODE</span>
+                        <div class="order-number">${order.order_code || '#' + order.id}</div>
+                    </div>
+                    <button class="btn-detail" onclick="goToDetail('${order.id}')">Order Detail</button>
                 </div>
-                <button class="btn-detail" onclick="goToDetail('${order.id}')">Order Detail</button>
-            </div>
-            
-            <div class="customer-name">
-                <i class="fas fa-building"></i> ${order.customer_name || 'N/A'}
-            </div>
+                
+                <div class="customer-name">
+                    <i class="fas fa-building"></i> ${order.customer_name || 'N/A'}
+                </div>
 
-            <div class="deadline-box">
-                <i class="fas fa-calendar-alt"></i> Deadline: ${order.expected_delivery_date ? new Date(order.expected_delivery_date).toISOString().split('T')[0] : '---'}
-            </div>
+                <div class="deadline-box ${isOverdue ? 'overdue' : ''}">
+                    <i class="fas fa-calendar-alt"></i> Deadline: ${deadlineStr} ${isOverdue ? '(Overdue)' : ''}
+                </div>
 
-            <div class="attachment-box" id="attach-${order.id}">
-                <div class="file-info">
-                    <i class="fas fa-spinner fa-spin file-icon"></i>
-                    <span class="file-name">Loading document...</span>
+                <div class="attachment-box" id="attach-${order.id}">
+                    <div class="file-info">
+                        <i class="fas fa-spinner fa-spin file-icon"></i>
+                        <span class="file-name">Loading document...</span>
+                    </div>
+                </div>
+
+                <div class="card-actions">
+                    <button class="btn-confirm-action" onclick="updateStatus('${order.id}', 'confirm', '${order.order_code || ''}')">
+                        <i class="fas fa-check-circle"></i> Confirm Order
+                    </button>
+                    <button class="btn-reject-action" onclick="updateStatus('${order.id}', 'reject', '${order.order_code || ''}')">
+                        <i class="fas fa-undo"></i> Reject to Sales
+                    </button>
                 </div>
             </div>
-
-            <div class="card-actions">
-                <button class="btn-confirm-action" onclick="updateStatus('${order.id}', 'confirm', '${order.order_code || ''}')">
-                    <i class="fas fa-check-circle"></i> Confirm Order
-                </button>
-                <button class="btn-reject-action" onclick="updateStatus('${order.id}', 'reject', '${order.order_code || ''}')">
-                    <i class="fas fa-undo"></i> Reject to Sales
-                </button>
-            </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 
     pendingOrders.forEach(order => {
         apiGet(`/orders/${order.id}`)

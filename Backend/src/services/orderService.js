@@ -87,12 +87,17 @@ async function getAllOrders() {
       !order.delivered_at && isPast(order.expected_delivery_date);
 
     // Special logic for AWAITING_APPROVAL priority
-    if (order.status === 'AWAITING_APPROVAL' && order.prepare_deadline) {
-      const d = new Date(order.prepare_deadline);
-      d.setDate(d.getDate() + 1);
-      const deadlinePlus1 = d.toISOString().split('T')[0];
-      isPrepareDelayed = isPast(deadlinePlus1);
-      isDeliveryDelayed = false; // Only rely on prepare deadline + 1 for this status
+    if (order.status === 'AWAITING_APPROVAL') {
+      if (order.prepare_deadline) {
+        const d = new Date(order.prepare_deadline);
+        d.setDate(d.getDate() + 1);
+        const deadlinePlus1 = d.toISOString().split('T')[0];
+        isPrepareDelayed = isPast(deadlinePlus1);
+        isDeliveryDelayed = false;
+      } else {
+        isPrepareDelayed = false;
+        isDeliveryDelayed = isPast(order.expected_delivery_date);
+      }
     }
 
     return {
@@ -194,17 +199,23 @@ async function getOrderById(orderId) {
     ORDER BY oa.id ASC
   `, [orderId]);
 
-  const isPrepareDelayed =
-    !order.prepare_completed_at && isPast(order.prepare_deadline);
+  let isPrepareDelayed = !order.prepare_completed_at && isPast(order.prepare_deadline);
+  let isQcDelayed = !order.qc_completed_at && isPast(order.qc_deadline);
+  let isShippingDelayed = !order.shipping_completed_at && isPast(order.shipping_deadline);
+  let isDeliveryDelayed = !order.delivered_at && isPast(order.expected_delivery_date);
 
-  const isQcDelayed =
-    !order.qc_completed_at && isPast(order.qc_deadline);
-
-  const isShippingDelayed =
-    !order.shipping_completed_at && isPast(order.shipping_deadline);
-
-  const isDeliveryDelayed =
-    !order.delivered_at && isPast(order.expected_delivery_date);
+  // Apply special AWAITING_APPROVAL logic for detail view flags
+  if (order.status === 'AWAITING_APPROVAL') {
+    if (order.prepare_deadline) {
+      const d = new Date(order.prepare_deadline);
+      d.setDate(d.getDate() + 1);
+      isPrepareDelayed = isPast(d.toISOString().split('T')[0]);
+      isDeliveryDelayed = false;
+    } else {
+      isPrepareDelayed = false;
+      isDeliveryDelayed = isPast(order.expected_delivery_date);
+    }
+  }
 
   return {
     id: order.id,
@@ -1066,11 +1077,15 @@ async function getDashboardStats() {
     SELECT COUNT(*) as count FROM orders
     WHERE status NOT IN ('DRAFT', 'COMPLETED', 'REJECTED')
     AND (
-      (prepare_completed_at IS NULL AND prepare_deadline IS NOT NULL AND 
-        (CASE WHEN status = 'AWAITING_APPROVAL' THEN DATE_ADD(prepare_deadline, INTERVAL 1 DAY) ELSE prepare_deadline END) < CURDATE())
-      OR (qc_completed_at IS NULL AND qc_deadline IS NOT NULL AND qc_deadline < CURDATE())
-      OR (shipping_completed_at IS NULL AND shipping_deadline IS NOT NULL AND shipping_deadline < CURDATE())
-      OR (delivered_at IS NULL AND expected_delivery_date IS NOT NULL AND status != 'AWAITING_APPROVAL' AND expected_delivery_date < CURDATE())
+      (status = 'AWAITING_APPROVAL' AND (
+        (prepare_deadline IS NOT NULL AND DATE_ADD(prepare_deadline, INTERVAL 1 DAY) <= CURDATE()) OR
+        (prepare_deadline IS NULL AND expected_delivery_date IS NOT NULL AND expected_delivery_date <= CURDATE())
+      )) OR
+      (status = 'PREPARING' AND prepare_deadline IS NOT NULL AND prepare_deadline <= CURDATE()) OR
+      (status = 'QC' AND qc_deadline IS NOT NULL AND qc_deadline <= CURDATE()) OR
+      (status = 'SHIPPING' AND shipping_deadline IS NOT NULL AND shipping_deadline <= CURDATE()) OR
+      (status = 'AWAITING_INVOICE' AND expected_delivery_date IS NOT NULL AND expected_delivery_date <= CURDATE()) OR
+      (status NOT IN ('AWAITING_APPROVAL', 'PREPARING', 'QC', 'SHIPPING', 'AWAITING_INVOICE') AND expected_delivery_date IS NOT NULL AND expected_delivery_date <= CURDATE())
     )
   `);
   const overdueCount = overdueRows[0].count;
@@ -1080,11 +1095,15 @@ async function getDashboardStats() {
     SELECT COUNT(*) as count FROM orders
     WHERE status NOT IN ('DRAFT', 'COMPLETED', 'REJECTED')
     AND (
-      (prepare_deadline IS NOT NULL AND prepare_completed_at IS NULL AND
-        (CASE WHEN status = 'AWAITING_APPROVAL' THEN DATE_ADD(prepare_deadline, INTERVAL 1 DAY) ELSE prepare_deadline END) BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY))
-      OR (qc_deadline IS NOT NULL AND qc_deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND qc_completed_at IS NULL)
-      OR (shipping_deadline IS NOT NULL AND shipping_deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND shipping_completed_at IS NULL)
-      OR (expected_delivery_date IS NOT NULL AND status != 'AWAITING_APPROVAL' AND expected_delivery_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND delivered_at IS NULL)
+      (status = 'AWAITING_APPROVAL' AND (
+        (prepare_deadline IS NOT NULL AND DATE_ADD(prepare_deadline, INTERVAL 1 DAY) BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY)) OR
+        (prepare_deadline IS NULL AND expected_delivery_date IS NOT NULL AND expected_delivery_date BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY))
+      )) OR
+      (status = 'PREPARING' AND prepare_deadline IS NOT NULL AND prepare_deadline BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY)) OR
+      (status = 'QC' AND qc_deadline IS NOT NULL AND qc_deadline BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY)) OR
+      (status = 'SHIPPING' AND shipping_deadline IS NOT NULL AND shipping_deadline BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY)) OR
+      (status = 'AWAITING_INVOICE' AND expected_delivery_date IS NOT NULL AND expected_delivery_date BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY)) OR
+      (status NOT IN ('AWAITING_APPROVAL', 'PREPARING', 'QC', 'SHIPPING', 'AWAITING_INVOICE') AND expected_delivery_date IS NOT NULL AND expected_delivery_date BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY))
     )
   `);
   const highPriorityCount = highPriorityRows[0].count;
@@ -1139,34 +1158,44 @@ async function getDashboardStats() {
   // 9. Alerts: get delayed orders with details
   const [alertRows] = await pool.query(`
     SELECT id, order_code, customer_name, status, updated_at,
+      prepare_deadline, qc_deadline, shipping_deadline, expected_delivery_date,
+      prepare_completed_at, qc_completed_at, shipping_completed_at, delivered_at,
       (prepare_completed_at IS NULL AND prepare_deadline IS NOT NULL AND 
-        (CASE WHEN status = 'AWAITING_APPROVAL' THEN DATE_ADD(prepare_deadline, INTERVAL 1 DAY) ELSE prepare_deadline END) < CURDATE()) as is_prepare_delayed,
-      (qc_completed_at IS NULL AND qc_deadline IS NOT NULL AND qc_deadline < CURDATE()) as is_qc_delayed,
-      (shipping_completed_at IS NULL AND shipping_deadline IS NOT NULL AND shipping_deadline < CURDATE()) as is_shipping_delayed,
-      (delivered_at IS NULL AND expected_delivery_date IS NOT NULL AND status != 'AWAITING_APPROVAL' AND expected_delivery_date < CURDATE()) as is_delivery_delayed,
+        (CASE WHEN status = 'AWAITING_APPROVAL' THEN DATE_ADD(prepare_deadline, INTERVAL 1 DAY) ELSE prepare_deadline END) <= CURDATE()) as is_prepare_delayed,
+      (qc_completed_at IS NULL AND qc_deadline IS NOT NULL AND qc_deadline <= CURDATE()) as is_qc_delayed,
+      (shipping_completed_at IS NULL AND shipping_deadline IS NOT NULL AND shipping_deadline <= CURDATE()) as is_shipping_delayed,
+      (delivered_at IS NULL AND expected_delivery_date IS NOT NULL AND status != 'AWAITING_APPROVAL' AND expected_delivery_date <= CURDATE()) as is_delivery_delayed,
       (
         (prepare_deadline IS NOT NULL AND prepare_completed_at IS NULL AND
-          (CASE WHEN status = 'AWAITING_APPROVAL' THEN DATE_ADD(prepare_deadline, INTERVAL 1 DAY) ELSE prepare_deadline END) BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY))
-        OR (qc_deadline IS NOT NULL AND qc_deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND qc_completed_at IS NULL)
-        OR (shipping_deadline IS NOT NULL AND shipping_deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND shipping_completed_at IS NULL)
-        OR (expected_delivery_date IS NOT NULL AND status != 'AWAITING_APPROVAL' AND expected_delivery_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND delivered_at IS NULL)
+          (CASE WHEN status = 'AWAITING_APPROVAL' THEN DATE_ADD(prepare_deadline, INTERVAL 1 DAY) ELSE prepare_deadline END) BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY))
+        OR (qc_deadline IS NOT NULL AND qc_deadline BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND qc_completed_at IS NULL)
+        OR (shipping_deadline IS NOT NULL AND shipping_deadline BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND shipping_completed_at IS NULL)
+        OR (expected_delivery_date IS NOT NULL AND status != 'AWAITING_APPROVAL' AND expected_delivery_date BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND delivered_at IS NULL)
       ) as is_high_priority
     FROM orders
     WHERE status NOT IN ('DRAFT', 'COMPLETED', 'REJECTED')
     AND (
-      (prepare_completed_at IS NULL AND prepare_deadline IS NOT NULL AND 
-        (CASE WHEN status = 'AWAITING_APPROVAL' THEN DATE_ADD(prepare_deadline, INTERVAL 1 DAY) ELSE prepare_deadline END) < CURDATE())
-      OR (qc_completed_at IS NULL AND qc_deadline IS NOT NULL AND qc_deadline < CURDATE())
-      OR (shipping_completed_at IS NULL AND shipping_deadline IS NOT NULL AND shipping_deadline < CURDATE())
-      OR (delivered_at IS NULL AND expected_delivery_date IS NOT NULL AND status != 'AWAITING_APPROVAL' AND expected_delivery_date < CURDATE())
-      OR (prepare_deadline IS NOT NULL AND prepare_completed_at IS NULL AND
-        (CASE WHEN status = 'AWAITING_APPROVAL' THEN DATE_ADD(prepare_deadline, INTERVAL 1 DAY) ELSE prepare_deadline END) BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY))
-      OR (qc_deadline IS NOT NULL AND qc_deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND qc_completed_at IS NULL)
-      OR (shipping_deadline IS NOT NULL AND shipping_deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND shipping_completed_at IS NULL)
-      OR (expected_delivery_date IS NOT NULL AND status != 'AWAITING_APPROVAL' AND expected_delivery_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND delivered_at IS NULL)
+      -- Overdue
+      (status = 'AWAITING_APPROVAL' AND (
+        (prepare_deadline IS NOT NULL AND DATE_ADD(prepare_deadline, INTERVAL 1 DAY) <= CURDATE()) OR
+        (prepare_deadline IS NULL AND expected_delivery_date IS NOT NULL AND expected_delivery_date <= CURDATE())
+      )) OR
+      (status = 'PREPARING' AND prepare_deadline IS NOT NULL AND prepare_deadline <= CURDATE()) OR
+      (status = 'QC' AND qc_deadline IS NOT NULL AND qc_deadline <= CURDATE()) OR
+      (status = 'SHIPPING' AND shipping_deadline IS NOT NULL AND shipping_deadline <= CURDATE()) OR
+      (status = 'AWAITING_INVOICE' AND expected_delivery_date IS NOT NULL AND expected_delivery_date <= CURDATE()) OR
+      -- High Priority
+      (status = 'AWAITING_APPROVAL' AND (
+        (prepare_deadline IS NOT NULL AND DATE_ADD(prepare_deadline, INTERVAL 1 DAY) BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY)) OR
+        (prepare_deadline IS NULL AND expected_delivery_date IS NOT NULL AND expected_delivery_date BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY))
+      )) OR
+      (status = 'PREPARING' AND prepare_deadline IS NOT NULL AND prepare_deadline BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY)) OR
+      (status = 'QC' AND qc_deadline IS NOT NULL AND qc_deadline BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY)) OR
+      (status = 'SHIPPING' AND shipping_deadline IS NOT NULL AND shipping_deadline BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY)) OR
+      (status = 'AWAITING_INVOICE' AND expected_delivery_date IS NOT NULL AND expected_delivery_date BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY))
     )
     ORDER BY updated_at DESC
-    LIMIT 5
+    LIMIT 10
   `);
 
   // 10. Recent activity  
@@ -1189,6 +1218,7 @@ async function getDashboardStats() {
       totalOrders,
       activeOrders,
       highPriorityCount,
+      overdueCount,
       avgCycleTime
     },
     statusCounts: {

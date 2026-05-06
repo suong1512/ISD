@@ -108,72 +108,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         const filteredOrders = allOrders.filter(order => {
             const displayStatus = mapStatus(order.status);
-
-            // Determine Priority
-            let orderPriority = 'Low';
-            let relevantDeadline = null;
-            let isDelayed = false;
-
-            switch (order.status) {
-                case 'DRAFT':
-                case 'REJECTED':
-                case 'COMPLETED':
-                    orderPriority = 'None';
-                    break;
-                case 'AWAITING_APPROVAL':
-                    if (order.prepare_deadline) {
-                        const d = new Date(order.prepare_deadline);
-                        d.setDate(d.getDate() + 1);
-                        relevantDeadline = d.toISOString().split('T')[0];
-                        const dOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-                        const tOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-                        isDelayed = dOnly < tOnly;
-                    } else {
-                        relevantDeadline = order.expected_delivery_date;
-                        isDelayed = order.is_delivery_delayed;
-                    }
-                    break;
-                case 'CONFIRMED':
-                case 'PREPARING':
-                    relevantDeadline = order.prepare_deadline;
-                    isDelayed = order.is_prepare_delayed;
-                    break;
-                case 'QC':
-                    relevantDeadline = order.qc_deadline;
-                    isDelayed = order.is_qc_delayed;
-                    break;
-                case 'SHIPPING':
-                    relevantDeadline = order.shipping_deadline;
-                    isDelayed = order.is_shipping_delayed;
-                    break;
-                case 'AWAITING_INVOICE':
-                    relevantDeadline = order.expected_delivery_date;
-                    isDelayed = order.is_delivery_delayed;
-                    break;
-                default:
-                    relevantDeadline = order.expected_delivery_date;
-                    isDelayed = order.is_delivery_delayed;
-            }
-
-            if (orderPriority !== 'None') {
-                if (isDelayed) {
-                    orderPriority = 'Overdue';
-                } else if (relevantDeadline) {
-                    const deadlineDate = new Date(relevantDeadline);
-                    const diffDays = Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
-                    if (diffDays <= 3) orderPriority = 'High';
-                    else if (diffDays <= 7) orderPriority = 'Medium';
-                    else orderPriority = 'Low';
-                } else {
-                    orderPriority = 'Low';
-                }
-            }
-
-            order.displayPriority = orderPriority;
-            order.displayDeadline = relevantDeadline;
-
-            // Check overdue
-            const isOverdue = (order.status === 'QC' && order.is_qc_delayed) || (order.status === 'SHIPPING' && order.is_shipping_delayed);
+            // --- Determine Priority based on shared utility ---
+            const priorityInfo = getOrderPriority(order);
+            order.displayPriority = priorityInfo.priority;
+            order.displayDeadline = priorityInfo.deadline;
+            const isOverdue = priorityInfo.isOverdue;
 
             // Status matching
             let matchesStatus = true;
@@ -185,7 +124,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }
             }
 
-            const matchesPriority = (filterPriority === "All" || orderPriority === filterPriority);
+            const matchesPriority = (filterPriority === "All" || priorityInfo.priority === filterPriority);
 
             const orderCode = order.order_code ? String(order.order_code).toLowerCase() : "";
             const customerName = order.customer_name ? String(order.customer_name).toLowerCase() : "";
