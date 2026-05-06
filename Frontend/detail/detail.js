@@ -21,13 +21,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     const invoiceBtn = document.querySelector('.invoice-btn');
     if (invoiceBtn) {
         invoiceBtn.addEventListener('click', () => {
-            const user = JSON.parse(localStorage.getItem('authUser') || '{}');
+            const user = JSON.parse(sessionStorage.getItem('authUser') || '{}');
             if (user.role === 'ADMIN') {
                 window.location.href = '../A_invoice_view/A_invoice_view.html';
             } else if (user.role === 'ACCOUNTANT') {
                 window.location.href = '../AC_invoice_create/invoice.html';
             } else {
-                alert('Access denied: Only Admin and Accountant can view invoices.');
+                showCustomAlert('Access denied: Only Admin and Accountant can view invoices.', 'Access Denied', 'error');
             }
         });
     }
@@ -36,15 +36,16 @@ document.addEventListener('DOMContentLoaded', async function () {
     const orderId = sessionStorage.getItem('currentOrderId');
 
     if (!orderId) {
-        alert("Không tìm thấy mã đơn hàng!");
-        window.location.href = '../list/O_list.html';
+        showCustomAlert("Order reference not found!", "Error", "error").then(() => {
+            window.location.href = '../list/O_list.html';
+        });
         return;
     }
 
     // Initialize User Info
-    const initials = localStorage.getItem('userInitials');
-    const fullName = localStorage.getItem('currentUser');
-    const authUser = JSON.parse(localStorage.getItem('authUser')) || {};
+    const initials = sessionStorage.getItem('userInitials');
+    const fullName = sessionStorage.getItem('currentUser');
+    const authUser = JSON.parse(sessionStorage.getItem('authUser')) || {};
 
     // 2. Lấy chi tiết đơn hàng từ API
     let currentOrder;
@@ -59,8 +60,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     if (!currentOrder) {
-        alert("Order data not found!");
-        window.location.href = '../list/O_list.html';
+        showCustomAlert("Order data not found!", "Not Found", "error").then(() => {
+            window.location.href = '../list/O_list.html';
+        });
         return;
     }
 

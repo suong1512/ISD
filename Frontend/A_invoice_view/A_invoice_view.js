@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const orderId = sessionStorage.getItem('currentOrderId');
 
     if (!orderId) {
-        alert("No Order ID found!");
+        showCustomAlert("Order reference not found!", 'Error', 'error');
         window.location.href = '../list/O_list.html';
         return;
     }
@@ -20,12 +20,12 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     } catch (error) {
         console.error('Failed to load order:', error);
-        alert("Failed to load order details. Please try again.");
+        showCustomAlert("Failed to load order details. Please try again.", 'Error', 'error');
     }
 
     // PDF generation button
     document.getElementById('generatePdfBtn').addEventListener('click', () => {
-        alert('Generating PDF... (Demo)');
+        showCustomAlert('Generating PDF... (Demo)', 'Info', 'info');
         window.print();
     });
 });

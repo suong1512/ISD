@@ -194,7 +194,7 @@ async function initConfirmationPage(config) {
                                 btn.style.backgroundColor = '#e0e0e0';
                                 btn.style.color = '#888';
                                 btn.style.cursor = 'not-allowed';
-                                btn.onclick = (e) => { e.stopPropagation(); alert('Vui lòng tạo Invoice trước khi confirm và complete!'); };
+                                btn.onclick = (e) => { e.stopPropagation(); showCustomAlert('Please create Invoice before confirming and completing!', 'Action Required', 'info'); };
                                 btn.innerHTML = `<i class="fas fa-lock"></i> Create Invoice First`;
                             }
                         }
@@ -226,13 +226,13 @@ async function initConfirmationPage(config) {
         }
 
         try {
-            const userId = JSON.parse(localStorage.getItem('authUser'))?.id || 2;
+            const userId = JSON.parse(sessionStorage.getItem('authUser'))?.id || 2;
             await apiPatch(confirmEndpoint(orderId), { confirmed_by: userId });
-            alert(confirmSuccessMsg(orderCode || orderId));
+            await showCustomAlert(confirmSuccessMsg(orderCode || orderId), 'Success', 'success');
             renderOrders();
         } catch (error) {
             console.error('Confirm action failed:', error);
-            alert("Error: " + error.message);
+            showCustomAlert("Error: " + error.message, 'Error', 'error');
             if (btn) {
                 btn.disabled = false;
                 btn.innerHTML = originalHtml;

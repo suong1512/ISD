@@ -37,7 +37,7 @@ async function renderAdminOrders() {
         <div class="order-card" id="order-${order.id}">
             <div class="card-header">
                 <div>
-                    <span class="order-label">ORDER ID</span>
+                    <span class="order-label">ORDER CODE</span>
                     <div class="order-number">${order.order_code || '#' + order.id}</div>
                 </div>
                 <button class="btn-detail" onclick="goToDetail('${order.id}')">Order Detail</button>
@@ -59,10 +59,10 @@ async function renderAdminOrders() {
             </div>
 
             <div class="card-actions">
-                <button class="btn-confirm-action" onclick="updateStatus('${order.id}', 'confirm')">
+                <button class="btn-confirm-action" onclick="updateStatus('${order.id}', 'confirm', '${order.order_code || ''}')">
                     <i class="fas fa-check-circle"></i> Confirm Order
                 </button>
-                <button class="btn-reject-action" onclick="updateStatus('${order.id}', 'reject')">
+                <button class="btn-reject-action" onclick="updateStatus('${order.id}', 'reject', '${order.order_code || ''}')">
                     <i class="fas fa-undo"></i> Reject to Sales
                 </button>
             </div>
@@ -107,7 +107,7 @@ async function renderAdminOrders() {
     });
 }
 
-async function updateStatus(orderId, action) {
+async function updateStatus(orderId, action, orderCode = "") {
     const card = document.getElementById(`order-${orderId}`);
     const btns = card ? card.querySelectorAll('.card-actions button') : [];
     const targetBtn = action === 'confirm' ? btns[0] : btns[1];
@@ -121,18 +121,18 @@ async function updateStatus(orderId, action) {
 
     try {
         if (action === 'confirm') {
-            await apiPatch(`/orders/${orderId}/confirm`, { confirmed_by: JSON.parse(localStorage.getItem('authUser'))?.id || 2 });
-            alert("Success: Order #" + orderId + " is confirmed!");
+            await apiPatch(`/orders/${orderId}/confirm`, { confirmed_by: JSON.parse(sessionStorage.getItem('authUser'))?.id || 2 });
+            await showCustomAlert(`Success: Order ${orderCode} is confirmed!`, 'Confirmed', 'success');
         } else if (action === 'reject') {
             await apiPatch(`/orders/${orderId}/reject`, {});
-            alert("Notice: Order #" + orderId + " is rejected.");
+            await showCustomAlert(`Notice: Order ${orderCode} is rejected.`, 'Rejected', 'info');
         }
 
         // Re-render danh sách
         renderAdminOrders();
     } catch (error) {
         console.error('Update status failed:', error);
-        alert("Error: " + error.message);
+        showCustomAlert("Error: " + error.message, 'Error', 'error');
         if (btns.length > 0) {
             btns.forEach(b => b.disabled = false);
             targetBtn.innerHTML = originalHtml;

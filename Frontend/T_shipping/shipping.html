@@ -117,8 +117,8 @@
             }
 
             // Load user data
-            const initials = localStorage.getItem('userInitials');
-            const fullName = localStorage.getItem('currentUser');
+            const initials = sessionStorage.getItem('userInitials');
+            const fullName = sessionStorage.getItem('currentUser');
             const avatarElement = document.getElementById('avatarTrigger');
             const dropdownName = document.querySelector('.dropdown-header strong');
 

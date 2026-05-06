@@ -66,9 +66,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(`Access denied. Please log in with a ${friendlyRole} account.`);
             }
 
-            // Store user data
-            localStorage.setItem('authUser', JSON.stringify(user));
-            localStorage.setItem('currentUser', user.full_name);
+            // Store user data in sessionStorage for per-tab isolation
+            sessionStorage.setItem('authUser', JSON.stringify(user));
+            sessionStorage.setItem('currentUser', user.full_name);
 
             // Generate initials
             const initials = user.full_name
@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .map(word => word.charAt(0).toUpperCase())
                 .slice(0, 2)
                 .join('');
-            localStorage.setItem('userInitials', initials);
+            sessionStorage.setItem('userInitials', initials);
 
             console.log('Login success!', user);
 
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 errorEl.textContent = error.message;
                 errorEl.style.display = 'block';
             } else {
-                alert(error.message);
+                showCustomAlert(error.message, 'Login Error', 'error');
             }
         } finally {
             loginBtn.disabled = false;

@@ -1,15 +1,16 @@
 document.addEventListener('DOMContentLoaded', async function () {
     // 1. Auth Guard for Admin
-    const authUser = JSON.parse(localStorage.getItem('authUser'));
+    const authUser = JSON.parse(sessionStorage.getItem('authUser'));
     if (!authUser || authUser.role !== 'ADMIN') {
-        alert('Access denied. Administrator privileges required.');
-        window.location.href = '../gate/gate.html';
+        showCustomAlert('Access denied. Administrator privileges required.', 'Access Denied', 'error').then(() => {
+            window.location.href = '../gate/gate.html';
+        });
         return;
     }
 
     // 2. Map UI - User Info
-    const initials = localStorage.getItem('userInitials') || 'AD';
-    const fullName = authUser.full_name || localStorage.getItem('currentUser') || 'Admin';
+    const initials = sessionStorage.getItem('userInitials') || 'AD';
+    const fullName = authUser.full_name || sessionStorage.getItem('currentUser') || 'Admin';
 
     const avatarElement = document.getElementById('avatarTrigger');
     const dropdownName = document.getElementById('dropdownName');

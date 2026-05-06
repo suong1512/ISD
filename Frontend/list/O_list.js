@@ -15,7 +15,7 @@ function getStatusClass(status) {
 // 2. Hàm điều hướng
 function goToDetail(id, status) {
     if (!id || id === 'undefined' || id === 'N/A') {
-        alert("Invalid ID");
+        showCustomAlert("Invalid order reference", "Error", "error");
         return;
     }
 
@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         const response = await apiGet('/orders');
         let fetchedOrders = response.data || [];
 
-        const authUser = JSON.parse(localStorage.getItem('authUser')) || {};
+        const authUser = JSON.parse(sessionStorage.getItem('authUser')) || {};
         if (authUser.role === 'ADMIN') {
             fetchedOrders = fetchedOrders.filter(o => o.status !== 'DRAFT');
         }
@@ -300,9 +300,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     renderOrders(); // Chạy lần đầu
 
     // Avatar / User info
-    const initials = localStorage.getItem('userInitials');
-    const fullName = localStorage.getItem('currentUser');
-    const authUser = JSON.parse(localStorage.getItem('authUser')) || {};
+    const initials = sessionStorage.getItem('userInitials');
+    const fullName = sessionStorage.getItem('currentUser');
+    const authUser = JSON.parse(sessionStorage.getItem('authUser')) || {};
 
     const avatarElement = document.getElementById('avatarTrigger');
     const dropdownName = document.querySelector('.dropdown-header strong');

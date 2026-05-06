@@ -7,12 +7,12 @@
  */
 
 function getCurrentUser() {
-    const userData = localStorage.getItem('authUser');
+    const userData = sessionStorage.getItem('authUser');
     if (!userData) return null;
     try {
         return JSON.parse(userData);
     } catch (e) {
-        localStorage.removeItem('authUser');
+        sessionStorage.removeItem('authUser');
         return null;
     }
 }
@@ -34,8 +34,9 @@ function requireAuth(allowedRoles) {
     if (allowedRoles) {
         const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
         if (!roles.includes(user.role)) {
-            alert('You do not have permission to access this page.');
-            window.location.href = getGatePath();
+            showCustomAlert('Access denied. Redirecting to your dashboard.', 'Permission Denied', 'error').then(() => {
+                window.location.href = getDashboardPath(user.role);
+            });
             return false;
         }
     }
@@ -44,15 +45,22 @@ function requireAuth(allowedRoles) {
 }
 
 function logout() {
-    localStorage.removeItem('authUser');
-    localStorage.removeItem('currentUser');
-    localStorage.removeItem('userInitials');
+    sessionStorage.removeItem('authUser');
+    sessionStorage.removeItem('currentUser');
+    sessionStorage.removeItem('userInitials');
     window.location.href = getGatePath();
 }
 
+function getDashboardPath(role) {
+    switch (role) {
+        case 'ADMIN': return '../A_dashboard/A_dash.html';
+        case 'TECH_STAFF': return '../T_tasks/T_dash.html';
+        case 'ACCOUNTANT': return '../AC_tasks/AC_dash.html';
+        case 'SALES_STAFF': return '../S_tasks/S_dash.html';
+        default: return '../gate/gate.html';
+    }
+}
+
 function getGatePath() {
-    // Try to find the gate page relative to current location
-    const depth = window.location.pathname.split('/').filter(Boolean).length;
-    // Default fallback
     return '../gate/gate.html';
 }

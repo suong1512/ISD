@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Initialize UI for user info
     setupUserInfo();
 
-    const authUser = JSON.parse(localStorage.getItem('authUser')) || {};
+            const authUser = JSON.parse(sessionStorage.getItem('authUser')) || {};
 
     // Block Admin from creating/confirming invoices
     if (authUser.role === 'ADMIN') {
@@ -137,16 +137,13 @@ document.addEventListener('DOMContentLoaded', async function () {
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Completing...';
 
         try {
-            const authUser = JSON.parse(localStorage.getItem('authUser')) || {};
+                    const authUser = JSON.parse(sessionStorage.getItem('authUser')) || {};
             await apiPatch(`/orders/${orderId}/complete`, { confirmed_by: authUser.id || 2 });
-            showCustomAlert('Invoice confirmed and order completed successfully!');
-            // Page redirect is handled after OK in showCustomAlert if we use pendingReload or similar pattern, 
-            // but here we can just wait for the promise from showCustomAlert
-            await showCustomAlert('Invoice confirmed and order completed successfully!');
+            await showCustomAlert('Invoice confirmed and order completed successfully!', 'Success', 'success');
             window.location.href = '../AC_tasks/AC_dash.html';
         } catch (error) {
             console.error('Confirm action failed:', error);
-            alert("Error: " + error.message);
+            showCustomAlert("Error: " + error.message, 'Error', 'error');
             btn.disabled = false;
             btn.innerHTML = originalHtml;
         }
@@ -159,8 +156,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 });
 
 function setupUserInfo() {
-    const initials = localStorage.getItem('userInitials') || 'AC';
-    const fullName = localStorage.getItem('currentUser') || 'Accountant';
+    const initials = sessionStorage.getItem('userInitials') || 'AC';
+    const fullName = sessionStorage.getItem('currentUser') || 'Accountant';
     
     const avatar = document.getElementById('avatarTrigger');
     const dropdownName = document.getElementById('dropdownName');

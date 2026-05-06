@@ -13,7 +13,7 @@ function getStatusClass(status) {
 
 function goToDetail(id, status) {
     if (!id || id === 'undefined' || id === 'N/A') {
-        alert("Invalid ID");
+        showCustomAlert("Invalid order reference", "Error", "error");
         return;
     }
     sessionStorage.setItem('currentOrderId', id);
@@ -242,8 +242,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     renderOrders();
 
     // Avatar / User info
-    const initials = localStorage.getItem('userInitials');
-    const fullName = localStorage.getItem('currentUser');
+    const initials = sessionStorage.getItem('userInitials');
+    const fullName = sessionStorage.getItem('currentUser');
     const avatarElement = document.getElementById('avatarTrigger');
     const dropdownName = document.querySelector('.dropdown-header strong');
 

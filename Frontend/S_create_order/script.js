@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             prepare_deadline: document.getElementById('deadlinePrepare')?.value || null,
             qc_deadline: document.getElementById('deadlineQC')?.value || null,
             shipping_deadline: document.getElementById('deadlineShipping')?.value || null,
-            created_by: JSON.parse(localStorage.getItem('authUser'))?.id || 1, // Get real user ID from auth
+            created_by: JSON.parse(sessionStorage.getItem('authUser'))?.id || 1, // Get real user ID from auth
             items: items
         };
     }
@@ -208,22 +208,18 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }
             }
 
-            if (isDraft) {
-                alert("Draft saved successfully!");
-                const authUser = JSON.parse(localStorage.getItem('authUser')) || {};
-                if (editId && authUser.role === 'ADMIN') {
-                    window.location.href = "../list/O_list.html";
-                } else {
-                    window.location.href = "../S_tasks/S_dash.html";
-                }
+            const orderCode = result.data?.order_code || "";
+            const successMsg = isDraft 
+                ? `Draft ${orderCode} saved successfully!` 
+                : `Order ${orderCode} submitted successfully!`;
+
+            await showCustomAlert(successMsg, 'Success', 'success');
+
+            const authUser = JSON.parse(sessionStorage.getItem('authUser')) || {};
+            if (editId && authUser.role === 'ADMIN') {
+                window.location.href = "../list/O_list.html";
             } else {
-                alert("Order created successfully!");
-                const authUser = JSON.parse(localStorage.getItem('authUser')) || {};
-                if (editId && authUser.role === 'ADMIN') {
-                    window.location.href = "../list/O_list.html";
-                } else {
-                    window.location.href = "../S_tasks/S_dash.html";
-                }
+                window.location.href = "../S_tasks/S_dash.html";
             }
 
         } catch (error) {
@@ -358,8 +354,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
 
     // --- 8. AVATAR / USER INFO ---
-    const initials = localStorage.getItem('userInitials');
-    const fullName = localStorage.getItem('currentUser');
+    const initials = sessionStorage.getItem('userInitials');
+    const fullName = sessionStorage.getItem('currentUser');
     const avatarElement = document.getElementById('avatarTrigger');
     const dropdownName = document.querySelector('.dropdown-header strong');
 
