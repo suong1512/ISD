@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             const titleEl = this.querySelector('.kpi-title');
             if (!titleEl) return;
             const title = titleEl.innerText;
-            if (title === 'HIGH PRIORITY') {
+            if (title === 'CRITICAL ISSUES') {
                 window.location.href = '../list/O_list.html?filter=priority%3DHigh';
             } else if (title === 'TOTAL ORDERS') {
                 window.location.href = '../list/O_list.html';
@@ -92,19 +92,19 @@ function renderDashboard(stats) {
     document.getElementById('totalOrders').innerText = kpi.totalOrders.toLocaleString();
     const activePct = kpi.totalOrders > 0 ? Math.round((kpi.activeOrders / kpi.totalOrders) * 100) : 0;
     const kpiTotalSub = document.getElementById('kpiTotalSub');
-    kpiTotalSub.innerText = `orders`;
+    kpiTotalSub.innerText = ``;
     kpiTotalSub.className = 'kpi-trend text-muted';
 
     document.getElementById('kpiInProgress').innerText = kpi.activeOrders.toLocaleString();
 
     const kpiActiveSub = document.getElementById('kpiActiveSub');
-    kpiActiveSub.innerText = `${activePct}% active`;
+    kpiActiveSub.innerText = ``;
     kpiActiveSub.className = 'kpi-trend text-success';
     const criticalCount = (kpi.highPriorityCount || 0) + (kpi.overdueCount || 0);
     document.getElementById('kpiDelayed').innerText = criticalCount.toLocaleString();
-    document.getElementById('kpiDelayedSub').innerText = `${kpi.overdueCount || 0} overdue`;
+    document.getElementById('kpiDelayedSub').innerText = ``;
     document.getElementById('kpiCycleTime').innerText = kpi.avgCycleTime;
-    document.getElementById('kpiCycleSub').innerText = `days`;
+    document.getElementById('kpiCycleSub').innerText = ``;
 
     // === Charts ===
     // Status Breakdown Chart
@@ -119,7 +119,7 @@ function renderDashboard(stats) {
     // Workload Distribution
     renderWorkloadChart(stats.workload);
 
-    // === Alerts (Đề xuất 4: Red for overdue, Yellow for high priority) ===
+    // === Alerts (Red for overdue, Orange for high priority) ===
     renderAlerts(stats.alerts);
 
     // === Recent Activity (Pass alerts count to align heights) ===
@@ -203,7 +203,7 @@ function renderAlerts(alerts) {
                     </div>
                     <p>${o.customer_name || 'Customer'}</p>
                     <div class="alert-box-actions">
-                        <button class="${isOverdue ? 'btn-danger-solid' : 'btn-warning-solid'}" style="padding: 4px 10px; font-size: 11px;" onclick="sessionStorage.setItem('currentOrderId', '${o.id}'); window.location.href='../detail/detail.html'">View Detail</button>
+                        <button class="${isOverdue ? 'btn-danger-solid' : 'btn-warning-solid'}" onclick="sessionStorage.setItem('currentOrderId', '${o.id}'); window.location.href='../detail/detail.html'">View Detail</button>
                     </div>
                 </div>
             </div>
@@ -346,13 +346,17 @@ function renderTrendChartFromStats(trendData) {
         for (let i = 6; i >= 0; i--) {
             const d = new Date();
             d.setDate(d.getDate() - i);
-            days.push(d.toISOString().split('T')[0]);
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            days.push(`${y}-${m}-${day}`);
         }
 
         // Build a lookup from backend data
         const lookup = {};
         trendData.forEach(row => {
-            const dateStr = new Date(row.date).toISOString().split('T')[0];
+            // row.date is now a string 'YYYY-MM-DD' from backend
+            const dateStr = row.date;
             lookup[dateStr] = row.count;
         });
 

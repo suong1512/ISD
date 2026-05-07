@@ -199,9 +199,7 @@ window.getOrderPriority = function(order) {
         
         case 'AWAITING_APPROVAL':
             if (order.prepare_deadline) {
-                const d = new Date(order.prepare_deadline);
-                d.setDate(d.getDate() + 1);
-                relevantDeadlineDate = d;
+                relevantDeadlineDate = new Date(order.prepare_deadline);
             } else {
                 relevantDeadlineDate = order.expected_delivery_date ? new Date(order.expected_delivery_date) : null;
             }

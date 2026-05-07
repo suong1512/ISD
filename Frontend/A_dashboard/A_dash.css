@@ -134,42 +134,44 @@
 .alert-box {
     background: #fff;
     border-radius: 8px;
-    padding: 20px;
+    padding: 16px;
     display: flex;
     gap: 15px;
     margin-bottom: 15px;
-    align-items: flex-start;
+    align-items: center;
+    border: 1px solid #eee;
+    transition: all 0.2s;
 }
 
 .danger-box {
     background-color: #fff1f0;
-    border: 1px solid #ff4d4f;
+    border: 1px solid #ffa39e;
 }
 
 .warning-box {
     background-color: #fff7e6;
-    border: 1px solid #ffa940;
+    border: 1px solid #ffd591;
 }
 
 .alert-box-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 16px;
+    font-size: 18px;
     flex-shrink: 0;
 }
 
 .danger-box .alert-box-icon {
     background: #ffccc7;
-    color: #d32f2f;
+    color: #f5222d;
 }
 
 .warning-box .alert-box-icon {
     background: #ffe58f;
-    color: #d46b08;
+    color: #fa8c16;
 }
 
 .alert-box-content {
@@ -184,31 +186,35 @@
 
 .danger-box .alert-box-header strong {
     color: #cf1322;
-    font-size: 15px;
+    font-size: 14px;
+    font-weight: 700;
 }
 
 .danger-box .alert-box-header span {
-    font-size: 12px;
+    font-size: 13px;
     color: #cf1322;
+    opacity: 0.8;
 }
 
 .warning-box .alert-box-header strong,
 .warning-box .alert-box-header span {
     color: #d46b08;
+    font-size: 14px;
 }
+.warning-box .alert-box-header strong { font-weight: 700; }
 
 .alert-box-content p {
-    font-size: 13px;
+    font-size: 14px;
     color: #555;
-    margin-bottom: 15px;
-    line-height: 1.5;
+    margin-bottom: 12px;
+    line-height: 1.4;
 }
 
 .danger-box .alert-box-content p {
     color: #a8071a;
 }
 .warning-box .alert-box-content p {
-    color: #873800;
+    color: #ad4e00;
 }
 
 .alert-box-actions {
@@ -217,25 +223,27 @@
 }
 
 .btn-danger-solid {
-    background: #cf1322;
+    background: #f5222d;
     color: white;
     border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
+    padding: 6px 14px;
+    border-radius: 6px;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
+    box-shadow: 0 2px 4px rgba(245, 34, 45, 0.2);
 }
 
 .btn-warning-solid {
-    background: #d46b08;
+    background: #fa8c16;
     color: white;
     border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
+    padding: 6px 14px;
+    border-radius: 6px;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
+    box-shadow: 0 2px 4px rgba(250, 140, 22, 0.2);
 }
 
 .activity-timeline {

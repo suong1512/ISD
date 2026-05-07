@@ -110,7 +110,7 @@
                 <div class="kpi-card alert-kpi">
                     <div class="kpi-info" style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
                         <div>
-                            <h3 class="kpi-title" style="color: #d32f2f;">HIGH PRIORITY</h3>
+                            <h3 class="kpi-title" style="color: #d32f2f;">CRITICAL ISSUES</h3>
                             <div class="kpi-val-container">
                                 <span class="kpi-value" id="kpiDelayed" style="color: #d32f2f;">0</span>
                                 <span class="kpi-trend" style="color: #d32f2f;" id="kpiDelayedSub"></span>
@@ -209,7 +209,10 @@
             for (let i = 6; i >= 0; i--) {
                 const d = new Date();
                 d.setDate(d.getDate() - i);
-                days.push(d.toISOString().split('T')[0]);
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                days.push(`${y}-${m}-${day}`);
             }
 
             const data = days.map(dateStr => {

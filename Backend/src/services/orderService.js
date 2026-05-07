@@ -89,10 +89,7 @@ async function getAllOrders() {
     // Special logic for AWAITING_APPROVAL priority
     if (order.status === 'AWAITING_APPROVAL') {
       if (order.prepare_deadline) {
-        const d = new Date(order.prepare_deadline);
-        d.setDate(d.getDate() + 1);
-        const deadlinePlus1 = d.toISOString().split('T')[0];
-        isPrepareDelayed = isPast(deadlinePlus1);
+        isPrepareDelayed = isPast(order.prepare_deadline);
         isDeliveryDelayed = false;
       } else {
         isPrepareDelayed = false;
@@ -207,9 +204,7 @@ async function getOrderById(orderId) {
   // Apply special AWAITING_APPROVAL logic for detail view flags
   if (order.status === 'AWAITING_APPROVAL') {
     if (order.prepare_deadline) {
-      const d = new Date(order.prepare_deadline);
-      d.setDate(d.getDate() + 1);
-      isPrepareDelayed = isPast(d.toISOString().split('T')[0]);
+      isPrepareDelayed = isPast(formatDateOnly(order.prepare_deadline));
       isDeliveryDelayed = false;
     } else {
       isPrepareDelayed = false;
@@ -1078,7 +1073,7 @@ async function getDashboardStats() {
     WHERE status NOT IN ('DRAFT', 'COMPLETED', 'REJECTED')
     AND (
       (status = 'AWAITING_APPROVAL' AND (
-        (prepare_deadline IS NOT NULL AND DATE_ADD(prepare_deadline, INTERVAL 1 DAY) <= CURDATE()) OR
+        (prepare_deadline IS NOT NULL AND prepare_deadline <= CURDATE()) OR
         (prepare_deadline IS NULL AND expected_delivery_date IS NOT NULL AND expected_delivery_date <= CURDATE())
       )) OR
       (status = 'PREPARING' AND prepare_deadline IS NOT NULL AND prepare_deadline <= CURDATE()) OR
@@ -1096,7 +1091,7 @@ async function getDashboardStats() {
     WHERE status NOT IN ('DRAFT', 'COMPLETED', 'REJECTED')
     AND (
       (status = 'AWAITING_APPROVAL' AND (
-        (prepare_deadline IS NOT NULL AND DATE_ADD(prepare_deadline, INTERVAL 1 DAY) BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY)) OR
+        (prepare_deadline IS NOT NULL AND prepare_deadline BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY)) OR
         (prepare_deadline IS NULL AND expected_delivery_date IS NOT NULL AND expected_delivery_date BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY))
       )) OR
       (status = 'PREPARING' AND prepare_deadline IS NOT NULL AND prepare_deadline BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY)) OR
@@ -1147,11 +1142,11 @@ async function getDashboardStats() {
 
   // 8. Trend data: orders created per day in last 7 days
   const [trendRows] = await pool.query(`
-    SELECT DATE(created_at) as date, COUNT(*) as count
+    SELECT DATE_FORMAT(created_at, '%Y-%m-%d') as date, COUNT(*) as count
     FROM orders
     WHERE status != 'DRAFT'
     AND created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-    GROUP BY DATE(created_at)
+    GROUP BY DATE_FORMAT(created_at, '%Y-%m-%d')
     ORDER BY date ASC
   `);
 
@@ -1161,13 +1156,13 @@ async function getDashboardStats() {
       prepare_deadline, qc_deadline, shipping_deadline, expected_delivery_date,
       prepare_completed_at, qc_completed_at, shipping_completed_at, delivered_at,
       (prepare_completed_at IS NULL AND prepare_deadline IS NOT NULL AND 
-        (CASE WHEN status = 'AWAITING_APPROVAL' THEN DATE_ADD(prepare_deadline, INTERVAL 1 DAY) ELSE prepare_deadline END) <= CURDATE()) as is_prepare_delayed,
+        prepare_deadline <= CURDATE()) as is_prepare_delayed,
       (qc_completed_at IS NULL AND qc_deadline IS NOT NULL AND qc_deadline <= CURDATE()) as is_qc_delayed,
       (shipping_completed_at IS NULL AND shipping_deadline IS NOT NULL AND shipping_deadline <= CURDATE()) as is_shipping_delayed,
       (delivered_at IS NULL AND expected_delivery_date IS NOT NULL AND status != 'AWAITING_APPROVAL' AND expected_delivery_date <= CURDATE()) as is_delivery_delayed,
       (
         (prepare_deadline IS NOT NULL AND prepare_completed_at IS NULL AND
-          (CASE WHEN status = 'AWAITING_APPROVAL' THEN DATE_ADD(prepare_deadline, INTERVAL 1 DAY) ELSE prepare_deadline END) BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY))
+          prepare_deadline BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY))
         OR (qc_deadline IS NOT NULL AND qc_deadline BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND qc_completed_at IS NULL)
         OR (shipping_deadline IS NOT NULL AND shipping_deadline BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND shipping_completed_at IS NULL)
         OR (expected_delivery_date IS NOT NULL AND status != 'AWAITING_APPROVAL' AND expected_delivery_date BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND delivered_at IS NULL)
@@ -1177,7 +1172,7 @@ async function getDashboardStats() {
     AND (
       -- Overdue
       (status = 'AWAITING_APPROVAL' AND (
-        (prepare_deadline IS NOT NULL AND DATE_ADD(prepare_deadline, INTERVAL 1 DAY) <= CURDATE()) OR
+        (prepare_deadline IS NOT NULL AND prepare_deadline <= CURDATE()) OR
         (prepare_deadline IS NULL AND expected_delivery_date IS NOT NULL AND expected_delivery_date <= CURDATE())
       )) OR
       (status = 'PREPARING' AND prepare_deadline IS NOT NULL AND prepare_deadline <= CURDATE()) OR
@@ -1186,7 +1181,7 @@ async function getDashboardStats() {
       (status = 'AWAITING_INVOICE' AND expected_delivery_date IS NOT NULL AND expected_delivery_date <= CURDATE()) OR
       -- High Priority
       (status = 'AWAITING_APPROVAL' AND (
-        (prepare_deadline IS NOT NULL AND DATE_ADD(prepare_deadline, INTERVAL 1 DAY) BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY)) OR
+        (prepare_deadline IS NOT NULL AND prepare_deadline BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY)) OR
         (prepare_deadline IS NULL AND expected_delivery_date IS NOT NULL AND expected_delivery_date BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY))
       )) OR
       (status = 'PREPARING' AND prepare_deadline IS NOT NULL AND prepare_deadline BETWEEN DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND DATE_ADD(CURDATE(), INTERVAL 3 DAY)) OR
